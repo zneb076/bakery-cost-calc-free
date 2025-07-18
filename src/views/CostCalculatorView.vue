@@ -1,42 +1,48 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { db } from '../services/db.js';
 import Multiselect from '@vueform/multiselect';
 import Swal from 'sweetalert2';
 
-// State สำหรับเก็บข้อมูล
-const finalRecipes = ref([]); // เก็บเฉพาะสูตรหลัก
+// --- States for Input ---
+const finalRecipes = ref([]);
+const allIngredients = ref([]);
+const allSubRecipes = ref([]);
 const selectedRecipeId = ref(null);
-const productionQuantity = ref(30); // จำนวนชิ้นที่ต้องการผลิต
-const weightPerPiece = ref(50); // น้ำหนักต่อชิ้น (กรัม)
+const productionQuantity = ref(100);
+const weightPerPiece = ref(50);
 
-// State สำหรับแสดงผล
+// --- States for Additional Costs ---
+const laborCostPerHour = ref(50); // ค่าแรงต่อชั่วโมง
+const workHours = ref(6); // ชั่วโมงที่ทำงาน
+const overheadPercent = ref(20); // ค่าใช้จ่ายแฝง (%)
+const targetFoodCostPercent = ref(30); // % Food Cost ที่ต้องการ
+const customSellingPrice = ref(null); // ราคาขายที่กำหนดเอง
+
+// --- States for Display ---
 const calculationResult = ref(null);
 const isLoading = ref(false);
 
-// ดึงข้อมูลเฉพาะสูตรหลัก (isSubRecipe: false)
-async function fetchFinalRecipes() {
+// --- Data Fetching ---
+async function fetchData() {
   try {
-    const allRecipes = await db.recipes.toArray();
-    finalRecipes.value = allRecipes.filter(
-      (recipe) => recipe.isSubRecipe === false
-    );
-    ป;
+    const [recipes, ingredients] = await Promise.all([
+      db.recipes.toArray(),
+      db.ingredients.toArray(),
+    ]);
+    finalRecipes.value = recipes.filter((r) => !r.isSubRecipe);
+    allSubRecipes.value = recipes.filter((r) => r.isSubRecipe);
+    allIngredients.value = ingredients;
   } catch (error) {
-    console.error('Failed to fetch final recipes:', error);
+    console.error('Failed to fetch data:', error);
+    Swal.fire('เกิดข้อผิดพลาด!', 'ไม่สามารถดึงข้อมูลได้', 'error');
   }
 }
 
-// เตรียมข้อมูลสำหรับ Dropdown
-const recipeOptions = computed(() => {
-  return finalRecipes.value.map((recipe) => ({
-    value: recipe.id,
-    label: recipe.name,
-  }));
-});
+onMounted(fetchData);
 
-// ฟังก์ชันคำนวณ (ตอนนี้ยังเป็นแค่โครงสร้าง)
-function calculateCost() {
+// --- Calculation Logic ---
+async function calculateCost() {
   if (!selectedRecipeId.value) {
     Swal.fire({
       icon: 'info',
@@ -45,22 +51,165 @@ function calculateCost() {
     });
     return;
   }
+  isLoading.value = true;
+  customSellingPrice.value = null; // Reset ราคาขายเมื่อคำนวณใหม่
 
-  // ในขั้นตอนต่อไป เราจะใส่ Logic การคำนวณที่ซับซ้อนที่นี่
-  console.log('Calculating cost for:', {
-    recipeId: selectedRecipeId.value,
-    quantity: productionQuantity.value,
-    weight: weightPerPiece.value,
-  });
+  try {
+    const mainRecipe = await db.recipes.get(selectedRecipeId.value);
+    const totalWeightNeeded = productionQuantity.value * weightPerPiece.value;
 
-  // สมมติว่ามีผลลัพธ์แล้ว (สำหรับแสดงผลชั่วคราว)
-  calculationResult.value = {
-    totalCost: 123.45,
-    // ... more data to come
-  };
+    let totalRecipeWeight = mainRecipe.ingredientsList.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+    if (totalRecipeWeight === 0) totalRecipeWeight = 1; // ป้องกันการหารด้วยศูนย์
+
+    const scalingFactor = totalWeightNeeded / totalRecipeWeight;
+
+    const flatIngredientList = await expandRecipe(mainRecipe, scalingFactor);
+
+    let foodCost = 0;
+    const costBreakdown = flatIngredientList.map((item) => {
+      const ingredientCost = item.totalQuantity * item.costPerGram;
+      foodCost += ingredientCost;
+      return {
+        name: item.name,
+        quantity: item.totalQuantity,
+        cost: ingredientCost,
+      };
+    });
+
+    calculationResult.value = {
+      foodCost,
+      costBreakdown,
+      recipeName: mainRecipe.name,
+      totalWeight: totalWeightNeeded,
+    };
+  } catch (error) {
+    console.error('Calculation Error:', error);
+    Swal.fire('เกิดข้อผิดพลาด!', 'ไม่สามารถคำนวณต้นทุนได้', 'error');
+  } finally {
+    isLoading.value = false;
+  }
 }
 
-onMounted(fetchFinalRecipes);
+async function expandRecipe(recipe, scalingFactor) {
+  const ingredientMap = new Map();
+
+  for (const item of recipe.ingredientsList) {
+    const scaledQuantity = item.quantity * scalingFactor;
+
+    const baseIngredient = allIngredients.value.find(
+      (i) => i.id === item.ingredientId
+    );
+
+    if (baseIngredient) {
+      if (ingredientMap.has(baseIngredient.id)) {
+        ingredientMap.get(baseIngredient.id).totalQuantity += scaledQuantity;
+      } else {
+        ingredientMap.set(baseIngredient.id, {
+          id: baseIngredient.id, // เพิ่ม id เพื่อให้ key ไม่ซ้ำ
+          name: baseIngredient.name,
+          costPerGram: baseIngredient.costPerGram,
+          totalQuantity: scaledQuantity,
+        });
+      }
+    } else {
+      const subRecipe = allSubRecipes.value.find(
+        (r) => r.id === item.ingredientId
+      );
+      if (subRecipe) {
+        const subRecipeTotalWeight =
+          subRecipe.ingredientsList.reduce(
+            (sum, current) => sum + current.quantity,
+            0
+          ) || 1;
+        const subRecipeScalingFactor = scaledQuantity / subRecipeTotalWeight;
+        const subIngredients = await expandRecipe(
+          subRecipe,
+          subRecipeScalingFactor
+        );
+
+        subIngredients.forEach((subItem) => {
+          if (ingredientMap.has(subItem.id)) {
+            ingredientMap.get(subItem.id).totalQuantity +=
+              subItem.totalQuantity;
+          } else {
+            ingredientMap.set(subItem.id, subItem);
+          }
+        });
+      }
+    }
+  }
+  return Array.from(ingredientMap.values());
+}
+
+// --- CORRECTED: Computed Properties for Final Calculation ---
+
+const totalLaborCost = computed(() => laborCostPerHour.value * workHours.value);
+
+const totalOverheadCost = computed(() => {
+  if (!calculationResult.value) return 0;
+  return calculationResult.value.foodCost * (overheadPercent.value / 100);
+});
+
+const totalCostWithOverhead = computed(() => {
+  if (!calculationResult.value) return 0;
+  return (
+    calculationResult.value.foodCost +
+    totalLaborCost.value +
+    totalOverheadCost.value
+  );
+});
+
+// **CORRECTED:** Calculates the suggested price PER PIECE
+const suggestedSellingPricePerPiece = computed(() => {
+  if (
+    !targetFoodCostPercent.value ||
+    !totalCostWithOverhead.value ||
+    !productionQuantity.value
+  )
+    return 0;
+  const totalSellingPrice =
+    totalCostWithOverhead.value / (targetFoodCostPercent.value / 100);
+  return totalSellingPrice / productionQuantity.value;
+});
+
+// This ref will now hold the final price, defaulting to the suggestion
+const finalSellingPricePerPiece = ref(0);
+
+// **NEW:** Watch for changes in the suggestion and update the final price
+watch(suggestedSellingPricePerPiece, (newValue) => {
+  finalSellingPricePerPiece.value = parseFloat(
+    newValue.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+  );
+});
+
+const totalRevenue = computed(() => {
+  return finalSellingPricePerPiece.value * productionQuantity.value;
+});
+
+// **CORRECTED:** Calculates profit based on the new totalRevenue
+const totalProfit = computed(() => {
+  if (!calculationResult.value) return 0;
+  return totalRevenue.value - totalCostWithOverhead.value;
+});
+
+const profitPerPiece = computed(() => {
+  if (!productionQuantity.value) return 0;
+  return totalProfit.value / productionQuantity.value;
+});
+
+// --- Computed Properties for UI ---
+const recipeOptions = computed(() => {
+  return finalRecipes.value.map((recipe) => ({
+    value: recipe.id,
+    label: recipe.name,
+  }));
+});
 </script>
 
 <template>
@@ -103,25 +252,262 @@ onMounted(fetchFinalRecipes);
           />
         </div>
       </div>
-
-      <div class="mt-6 text-right">
+      <div class="mt-5 text-right">
         <button
           @click="calculateCost"
-          class="rounded-lg bg-primary px-6 py-2 font-bold text-white transition-opacity hover:bg-opacity-90"
+          :disabled="isLoading"
+          class="rounded-lg bg-primary px-6 py-2 font-bold text-white transition-opacity hover:bg-opacity-90 disabled:opacity-50"
         >
-          คำนวณต้นทุน
+          <span v-if="isLoading">กำลังคำนวณ...</span>
+          <span v-else>คำนวณต้นทุน</span>
         </button>
       </div>
     </div>
 
-    <div class="mt-8">
-      <div v-if="!calculationResult" class="py-10 text-center text-gray-500">
-        <p>กรุณาเลือกสูตรและกรอกข้อมูลเพื่อคำนวณต้นทุน</p>
+    <div class="mt-5" v-if="calculationResult">
+      <div class="rounded-lg bg-white p-4 shadow-md">
+        <h2 class="mb-4 text-xl font-semibold">
+          ต้นทุนสูตร:
+          <span class="text-primary">{{ calculationResult.recipeName }}</span>
+        </h2>
+
+        <p class="mb-6 text-gray-600">
+          สำหรับขนมจำนวน {{ productionQuantity }} ชิ้น, ขนาด
+          {{ weightPerPiece }} กรัม/ชิ้น (น้ำหนักรวม
+          {{
+            calculationResult.totalWeight.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+          }}
+          กรัม)
+        </p>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead>
+              <tr class="border-b-2 border-gray-300">
+                <th
+                  class="px-2 py-2 text-left text-sm font-semibold text-gray-700"
+                >
+                  วัตถุดิบ
+                </th>
+                <th
+                  class="px-2 py-2 text-right text-sm font-semibold text-gray-700"
+                >
+                  ปริมาณ (กรัม)
+                </th>
+                <th
+                  class="px-2 py-2 text-right text-sm font-semibold text-gray-700"
+                >
+                  ต้นทุน (บาท)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="item in calculationResult.costBreakdown"
+                :key="item.name"
+                class="border-b border-gray-200"
+              >
+                <td class="px-2 py-2">{{ item.name }}</td>
+                <td class="px-2 py-2 text-right">
+                  {{
+                    item.quantity.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  }}
+                </td>
+                <td class="px-2 py-2 text-right">
+                  {{
+                    item.cost.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  }}
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="border-t-2 border-gray-300">
+                <td colspan="2" class="px-2 py-3 text-right text-lg font-bold">
+                  ต้นทุนวัตถุดิบรวม
+                </td>
+                <td class="px-2 py-3 text-right text-lg font-bold text-primary">
+                  {{
+                    calculationResult.foodCost.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
-      <div v-else class="rounded-lg bg-white p-6 shadow-md">
-        <h2 class="mb-4 text-2xl font-semibold">ผลการคำนวณ</h2>
-        <p>ต้นทุนรวม: {{ calculationResult.totalCost }} บาท</p>
+
+      <div class="mt-5 rounded-lg bg-white p-4 shadow-md">
+        <h3 class="mb-4 text-xl font-semibold text-secondary">
+          ต้นทุนเพิ่มเติม
+        </h3>
+        <div class="mb-4 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700"
+                >ค่าแรง (บาท/ชม.)</label
+              >
+              <input
+                v-model.number="laborCostPerHour"
+                type="number"
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700"
+                >เวลาที่ใช้ (ชม.)</label
+              >
+              <input
+                v-model.number="workHours"
+                type="number"
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700"
+                >ต้นทุนแฝง</label
+              >
+              <input
+                v-model.number="overheadPercent"
+                type="number"
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
+            <div class="self-end pb-2 text-gray-600">% ของต้นทุนวัตถุดิบ</div>
+          </div>
+        </div>
       </div>
+
+      <div class="my-5 rounded-lg bg-white p-4 shadow-md">
+        <div>
+          <h3 class="mb-4 text-lg font-semibold">สรุปต้นทุนและกำหนดราคาขาย</h3>
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label class="block text-sm font-medium"
+                >เป้าหมาย Food Cost (%)</label
+              >
+              <input
+                v-model.number="targetFoodCostPercent"
+                type="number"
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+              <div class="mt-1 pl-1 text-sm">
+                (ราคาแนะนำขายต่อชิ้น
+                <span class="text-sm font-semibold text-green-700">{{
+                  suggestedSellingPricePerPiece.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                }}</span>
+                บาท)
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5 space-y-1">
+            <div
+              class="flex items-center justify-between border-b pb-2 text-base"
+            >
+              <span class="font-medium text-gray-600">ราคาขายต่อชิ้น:</span>
+              <div class="w-40">
+                <input
+                  type="number"
+                  step="0.25"
+                  v-model.number="finalSellingPricePerPiece"
+                  class="w-full rounded-md border p-1 text-right text-base font-bold"
+                />
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between border-b pb-2 pt-2 text-base"
+            >
+              <div>
+                <span class="text-xl text-gray-700">ยอดขายทั้งหมด:</span>
+
+                <div class="text-xs text-gray-600">
+                  (จำนวนขนม {{ productionQuantity }} ชิ้น)
+                </div>
+              </div>
+              <span class="text-xl font-bold"
+                >{{
+                  totalRevenue.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                }}
+                บาท</span
+              >
+            </div>
+            <div
+              class="flex items-center justify-between border-b py-2 text-base"
+            >
+              <div>
+                <div class="font-medium text-gray-600">ต้นทุนรวมทั้งหมด:</div>
+                <div class="text-xs text-gray-600">(วัตถุดิบ+น้ำไฟ+ค่าแรง)</div>
+              </div>
+
+              <span class="text-base font-bold text-red-600"
+                >{{
+                  totalCostWithOverhead.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                }}
+                บาท</span
+              >
+            </div>
+
+            <div
+              class="flex items-center justify-between border-b py-2 text-base"
+            >
+              <span class="font-medium text-gray-600">กำไรทั้งหมด:</span>
+              <span class="text-xl font-bold text-green-600"
+                >{{
+                  totalProfit.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                }}
+                บาท</span
+              >
+            </div>
+
+            <div
+              class="flex items-center justify-between border-b py-2 text-base"
+            >
+              <span class="text-gray-600">กำไรต่อชิ้น:</span>
+              <span class="text-xl font-bold text-green-600"
+                >{{
+                  profitPerPiece.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                }}
+                บาท</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      v-if="!calculationResult && !isLoading"
+      class="py-10 text-center text-gray-500"
+    >
+      <p>กรุณาเลือกสูตรและกรอกข้อมูลเพื่อคำนวณต้นทุน</p>
     </div>
   </div>
 </template>
