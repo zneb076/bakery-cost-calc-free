@@ -1,0 +1,186 @@
+<script setup>
+import { ref, onMounted } from 'vue';
+import { db } from '../services/db.js';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faPencil, faTrash } from '@fortawesome/free-solid-svg-icons';
+import Swal from 'sweetalert2';
+
+import BaseModal from '../components/BaseModal.vue';
+import IngredientForm from '../components/forms/IngredientForm.vue';
+
+const ingredients = ref([]);
+const isModalOpen = ref(false);
+const editingIngredient = ref(null);
+
+async function fetchIngredients() {
+  ingredients.value = await db.ingredients.orderBy('name').toArray();
+}
+
+function openAddModal() {
+  editingIngredient.value = {
+    name: '',
+    purchaseUnit: 'กรัม',
+    purchaseQuantity: null,
+    purchasePrice: null,
+  };
+  isModalOpen.value = true;
+}
+
+function openEditModal(ingredient) {
+  editingIngredient.value = { ...ingredient };
+  isModalOpen.value = true;
+}
+
+function closeModal() {
+  isModalOpen.value = false;
+  editingIngredient.value = null;
+}
+
+// แก้ไขฟังก์ชันนี้ให้บันทึกข้อมูลตามโครงสร้างใหม่
+async function handleSave(formData) {
+  try {
+    // สร้าง object ข้อมูลที่จะบันทึก
+    const dataToSave = {
+      name: formData.name,
+      purchaseUnit: formData.purchaseUnit,
+      purchaseQuantity: formData.purchaseQuantity,
+      purchasePrice: formData.purchasePrice,
+      costPerGram: formData.costPerGram, // field ที่คำนวณแล้วจากฟอร์ม
+    };
+
+    if (formData.id) {
+      // Update
+      await db.ingredients.update(formData.id, dataToSave);
+    } else {
+      // Add
+      await db.ingredients.add(dataToSave);
+    }
+
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'บันทึกข้อมูลสำเร็จ',
+      showConfirmButton: false,
+      timer: 3000,
+    });
+
+    closeModal();
+    await fetchIngredients();
+  } catch (error) {
+    console.error('Save failed:', error);
+    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+  }
+}
+
+async function deleteIngredient(id, name) {
+  const result = await Swal.fire({
+    title: `คุณแน่ใจหรือไม่?`,
+    text: `คุณต้องการลบ "${name}" ใช่ไหม? การกระทำนี้ไม่สามารถย้อนกลับได้!`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'ใช่, ลบเลย!',
+    cancelButtonText: 'ยกเลิก',
+  });
+
+  if (result.isConfirmed) {
+    try {
+      // ลบข้อมูลออกจากฐานข้อมูล
+      await db.ingredients.delete(id);
+      // โหลดข้อมูลใหม่เพื่ออัปเดตหน้าจอ
+      await fetchIngredients();
+      // แสดงข้อความสำเร็จ
+      await Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'ลบข้อมูลสำเร็จ',
+        showConfirmButton: false,
+        timer: 1000,
+        timerProgressBar: true,
+      });
+    } catch (error) {
+      console.error('Failed to delete ingredient:', error);
+      await Swal.fire('เกิดข้อผิดพลาด!', 'ไม่สามารถลบข้อมูลได้', 'error');
+    }
+  }
+}
+
+onMounted(fetchIngredients);
+</script>
+
+<template>
+  <div>
+    <div class="rounded-lg bg-white p-3 shadow-md">
+      <div class="overflow-x-auto">
+        <div class="mb-6 flex items-center justify-between">
+          <h1 class="text-3xl font-bold">จัดการวัตถุดิบ</h1>
+          <button
+            @click="openAddModal"
+            class="rounded-lg bg-primary px-4 py-2 font-bold text-white transition-opacity hover:bg-opacity-90"
+          >
+            + เพิ่มวัตถุดิบใหม่
+          </button>
+        </div>
+        <table class="min-w-full bg-white">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-4 py-2 text-left">ชื่อวัตถุดิบ</th>
+              <th class="px-4 py-2 text-right font-semibold text-primary">
+                ราคาต่อกรัม (บาท)
+              </th>
+              <th class="px-4 py-2 text-center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="ingredients.length === 0">
+              <td colspan="4" class="py-4 text-center text-gray-500">
+                ยังไม่มีวัตถุดิบ...
+              </td>
+            </tr>
+            <tr
+              v-for="ingredient in ingredients"
+              :key="ingredient.id"
+              class="border-b hover:bg-gray-50"
+            >
+              <td class="px-4 py-2">{{ ingredient.name }}</td>
+              <td class="px-4 py-2 text-right font-semibold text-primary">
+                {{
+                  ingredient.costPerGram
+                    ? ingredient.costPerGram.toFixed(2)
+                    : 'N/A'
+                }}
+              </td>
+              <td class="px-4 py-2 text-center">
+                <div class="space-x-3">
+                  <button
+                    @click="openEditModal(ingredient)"
+                    class="text-gray-500 hover:text-secondary"
+                  >
+                    <font-awesome-icon :icon="faPencil" />
+                  </button>
+                  <button
+                    @click="deleteIngredient(ingredient.id, ingredient.name)"
+                    class="text-gray-500 hover:text-primary"
+                  >
+                    <font-awesome-icon :icon="faTrash" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <BaseModal v-if="isModalOpen" @close="closeModal">
+      <IngredientForm
+        :initial-data="editingIngredient"
+        @save="handleSave"
+        @cancel="closeModal"
+      />
+    </BaseModal>
+  </div>
+</template>
