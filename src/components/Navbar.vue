@@ -1,8 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-// 1. เพิ่มไอคอนสำหรับสลับฟอนต์
-import { faBars, faXmark, faLanguage } from '@fortawesome/free-solid-svg-icons';
 
 // State สำหรับเปิด/ปิดเมนูบนมือถือ
 const isMenuOpen = ref(false);
@@ -45,7 +42,7 @@ const emit = defineEmits(['toggle-font']);
             @click="$emit('toggle-font')"
             class="transition-colors hover:text-gray-200"
           >
-            <font-awesome-icon :icon="faLanguage" class="h-6 w-6" />
+            <font-awesome-icon icon="font" class="h-6 w-6" />
           </button>
         </li>
       </ul>
@@ -55,10 +52,10 @@ const emit = defineEmits(['toggle-font']);
           @click="$emit('toggle-font')"
           class="transition-colors hover:text-gray-200"
         >
-          <font-awesome-icon :icon="faLanguage" class="h-6 w-6" />
+          <font-awesome-icon icon="font" class="h-6 w-6" />
         </button>
         <button @click="toggleMenu">
-          <font-awesome-icon :icon="faBars" class="h-6 w-6" />
+          <font-awesome-icon icon="bars" class="h-6 w-6" />
         </button>
       </div>
     </div>
@@ -77,7 +74,7 @@ const emit = defineEmits(['toggle-font']);
       >
         <div class="flex justify-end p-4">
           <button @click="toggleMenu">
-            <font-awesome-icon :icon="faXmark" class="h-6 w-6" />
+            <font-awesome-icon icon="xmark" class="h-6 w-6" />
           </button>
         </div>
         <ul class="mt-8 flex flex-col items-center space-y-6">

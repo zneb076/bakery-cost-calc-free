@@ -11,3 +11,27 @@
 .font-mali {
   font-family: 'Mali', sans-serif;
 }
+
+/* เพิ่มกฎสำหรับปรับขนาดแท็กต่างๆ เฉพาะเมื่อใช้ฟอนต์ Mali
+*/
+@layer base {
+  body.font-mali {
+    @apply text-mali-base; /* หรือ text-xs ถ้าต้องการให้เล็กลงอีก */
+  }
+  body.font-mali h1 {
+    @apply text-2xl; /* ขนาดปกติของ h1 คือ text-4xl */
+  }
+
+  body.font-mali h2 {
+    @apply text-xl; /* ขนาดปกติของ h2 คือ text-3xl */
+  }
+
+  body.font-mali h3 {
+    @apply text-lg; /* ขนาดปกติของ h3 คือ text-2xl */
+  }
+
+  /* เพิ่มแท็กอื่นๆ ได้ตามต้องการ */
+  body.font-mali p {
+    @apply text-base; /* หรือขนาดอื่นๆ ที่คุณต้องการ */
+  }
+}

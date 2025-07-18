@@ -12,10 +12,12 @@ import {
   faXmark,
   faLanguage,
   faBars,
+  faFont,
+  faArrowUp,
 } from '@fortawesome/free-solid-svg-icons';
 
 // เพิ่มไอคอนทั้งหมดที่คุณต้องการใช้ในโปรเจกต์ที่นี่
-library.add(faPencil, faTrash, faXmark, faLanguage, faBars);
+library.add(faPencil, faTrash, faXmark, faLanguage, faBars, faFont, faArrowUp);
 
 const app = createApp(App);
 

@@ -176,7 +176,7 @@ function handleSubmit() {
                 v-model="item.ingredientId"
                 :options="ingredientOptions"
                 :searchable="true"
-                placeholder="เลือกวัตถุดิบ"
+                placeholder="วัตถุดิบ"
                 class="flex-grow"
               />
 

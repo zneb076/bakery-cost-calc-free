@@ -192,17 +192,15 @@ const totalCostWithOverhead = computed(() => {
   );
 });
 
-// **CORRECTED:** Calculates the suggested price PER PIECE
+// **NEW:** คำนวณต้นทุนต่อชิ้น
+const costPerPiece = computed(() => {
+  if (!productionQuantity.value || !totalCostWithOverhead.value) return 0;
+  return totalCostWithOverhead.value / productionQuantity.value;
+});
+
+// **NEW:** คำนวณราคาแนะนำขายจาก ต้นทุนต่อชิ้น + 50%
 const suggestedSellingPricePerPiece = computed(() => {
-  if (
-    !targetFoodCostPercent.value ||
-    !totalCostWithOverhead.value ||
-    !productionQuantity.value
-  )
-    return 0;
-  const totalSellingPrice =
-    totalCostWithOverhead.value / (targetFoodCostPercent.value / 100);
-  return totalSellingPrice / productionQuantity.value;
+  return costPerPiece.value * 1.5;
 });
 
 // This ref will now hold the final price, defaulting to the suggestion
@@ -301,8 +299,10 @@ const recipeOptions = computed(() => {
         </h2>
 
         <p class="mb-6 text-gray-600">
-          สำหรับขนมจำนวน {{ productionQuantity }} ชิ้น, ขนาด
-          {{ weightPerPiece }} กรัม/ชิ้น (น้ำหนักรวม
+          สำหรับขนมจำนวน {{ productionQuantity }} ชิ้น<br />
+          ขนาด
+          {{ weightPerPiece }} กรัม/ชิ้น <br />
+          (น้ำหนักรวม
           {{
             calculationResult.totalWeight.toLocaleString('en-US', {
               minimumFractionDigits: 2,
@@ -314,7 +314,7 @@ const recipeOptions = computed(() => {
 
         <div class="overflow-x-auto">
           <table class="min-w-full">
-            <thead>
+            <thead class="border-t-2 border-gray-300">
               <tr class="border-b-2 border-gray-300">
                 <th
                   class="px-2 py-2 text-left text-sm font-semibold text-gray-700"
@@ -358,30 +358,28 @@ const recipeOptions = computed(() => {
                 </td>
               </tr>
             </tbody>
-            <tfoot>
-              <tr class="border-t-2 border-gray-300">
-                <td colspan="2" class="px-2 py-3 text-right text-lg font-bold">
-                  ต้นทุนวัตถุดิบรวม
-                </td>
-                <td class="px-2 py-3 text-right text-lg font-bold text-primary">
-                  {{
-                    calculationResult.foodCost.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
-                  }}
-                </td>
-              </tr>
-            </tfoot>
           </table>
+          <div class="mt-2 pr-2 text-right text-base font-bold">
+            <span class="pr-2">ต้นทุนวัตถุดิบรวม</span>
+            {{
+              calculationResult.foodCost.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </div>
         </div>
       </div>
 
+      <!-- ต้นทุนเพิ่มเติม -->
       <div class="mt-5 rounded-lg bg-white p-4 shadow-md">
-        <h3 class="mb-4 text-xl font-semibold text-secondary">
+        <h3 class="mb-1 text-xl font-semibold text-secondary">
           ต้นทุนเพิ่มเติม
         </h3>
-        <div class="mb-4 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
+        <div class="text-sm text-gray-700">
+          (ใส่ 0 หรือปล่อยว่าง ในช่องที่ไม่ต้องการคิดทุน)
+        </div>
+        <div class="mb-4 mt-4 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700"
@@ -420,57 +418,45 @@ const recipeOptions = computed(() => {
         </div>
       </div>
 
-      <div class="my-5 rounded-lg bg-white p-4 shadow-md">
+      <!-- สรุปต้นทุนและกำหนดราคาขาย -->
+      <div class="mb-8 mt-5 rounded-lg bg-white p-4 shadow-md">
         <div>
-          <h3 class="mb-4 text-lg font-semibold">สรุปต้นทุนและกำหนดราคาขาย</h3>
+          <h3 class="mb-4 text-xl font-semibold">สรุปต้นทุนและกำหนดราคาขาย</h3>
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label class="block text-sm font-medium"
-                >เป้าหมาย Food Cost (%)</label
-              >
+              <span class="text-xl font-bold text-primary"
+                >ตั้งราคาขายต่อชิ้น
+              </span>
               <input
-                v-model.number="targetFoodCostPercent"
                 type="number"
-                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                step="0.25"
+                v-model.number="finalSellingPricePerPiece"
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-center text-3xl font-bold text-secondary"
               />
-              <div class="mt-1 pl-1 text-sm">
-                (ราคาแนะนำขายต่อชิ้น
-                <span class="text-sm font-semibold text-green-700">{{
-                  suggestedSellingPricePerPiece.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })
-                }}</span>
-                บาท)
+              <div class="mt-2 pl-1 text-xs">
+                - ราคาขายที่คำนวนมาเป็นราคา +50% จากต้นทุน<br />
+                - สามารถตั้งราคาใหม่ได้เพื่อดูกำไรที่ต้องการ
+                <div class="pr-1 text-xs text-red-600">
+                  - (ราคาขายต่ำกว่า {{ costPerPiece.toFixed(2) }} บาทจะขาดทุน)
+                </div>
               </div>
             </div>
           </div>
 
+          <div class="mt-5 space-y-1"></div>
+
           <div class="mt-5 space-y-1">
-            <div
-              class="flex items-center justify-between border-b pb-2 text-base"
-            >
-              <span class="font-medium text-gray-600">ราคาขายต่อชิ้น:</span>
-              <div class="w-40">
-                <input
-                  type="number"
-                  step="0.25"
-                  v-model.number="finalSellingPricePerPiece"
-                  class="w-full rounded-md border p-1 text-right text-base font-bold"
-                />
-              </div>
-            </div>
             <div
               class="flex items-center justify-between border-b pb-2 pt-2 text-base"
             >
               <div>
-                <span class="text-xl text-gray-700">ยอดขายทั้งหมด:</span>
+                <span class="text-lg text-gray-700">ยอดขายทั้งหมด:</span>
 
                 <div class="text-xs text-gray-600">
                   (จำนวนขนม {{ productionQuantity }} ชิ้น)
                 </div>
               </div>
-              <span class="text-xl font-bold"
+              <span class="text-xl font-bold text-secondary"
                 >{{
                   totalRevenue.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
@@ -488,7 +474,7 @@ const recipeOptions = computed(() => {
                 <div class="text-xs text-gray-600">(วัตถุดิบ+น้ำไฟ+ค่าแรง)</div>
               </div>
 
-              <span class="text-base font-bold text-red-600"
+              <span class="text-xl font-bold text-red-600"
                 >{{
                   totalCostWithOverhead.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
@@ -518,7 +504,7 @@ const recipeOptions = computed(() => {
               class="flex items-center justify-between border-b py-2 text-base"
             >
               <span class="text-gray-600">กำไรต่อชิ้น:</span>
-              <span class="text-xl font-bold text-green-600"
+              <span class="text-lg font-bold text-green-600"
                 >{{
                   profitPerPiece.toLocaleString('en-US', {
                     minimumFractionDigits: 2,

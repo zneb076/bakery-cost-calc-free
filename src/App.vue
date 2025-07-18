@@ -3,6 +3,7 @@ import { onMounted } from 'vue';
 import { useFontSwitcher } from './composables/useFontSwitcher.js';
 import Navbar from './components/Navbar.vue';
 import { db } from './services/db.js';
+import ScrollToTopButton from './components/ScrollToTopButton.vue';
 
 const { loadInitialFont, toggleFont } = useFontSwitcher();
 
@@ -93,6 +94,7 @@ onMounted(async () => {
     <main class="container mx-auto p-2">
       <router-view />
     </main>
+    <ScrollToTopButton />
   </div>
 </template>
 
