@@ -15,8 +15,8 @@ const toggleMenu = () => {
 const menuItems = [
   { text: 'หน้าหลัก', name: 'Home' },
   { text: 'คำนวณต้นทุน', name: 'Calculator' },
-  { text: 'จัดการสูตร', name: 'Recipes' },
-  { text: 'จัดการวัตถุดิบ', name: 'Ingredients' },
+  { text: 'สูตรขนม', name: 'Recipes' },
+  { text: 'วัตถุดิบ', name: 'Ingredients' },
   { text: 'ตั้งค่า', name: 'Settings' },
 ];
 

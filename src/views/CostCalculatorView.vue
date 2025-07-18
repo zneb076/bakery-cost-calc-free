@@ -1,15 +1,16 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { db } from '../services/db.js';
 import Multiselect from '@vueform/multiselect';
 import Swal from 'sweetalert2';
 
+const resultsSection = ref(null);
 // --- States for Input ---
 const finalRecipes = ref([]);
 const allIngredients = ref([]);
 const allSubRecipes = ref([]);
 const selectedRecipeId = ref(null);
-const productionQuantity = ref(100);
+const productionQuantity = ref(10);
 const weightPerPiece = ref(50);
 
 // --- States for Additional Costs ---
@@ -52,17 +53,32 @@ async function calculateCost() {
     return;
   }
   isLoading.value = true;
-  customSellingPrice.value = null; // Reset ราคาขายเมื่อคำนวณใหม่
+  calculationResult.value = null; // Clear previous results
 
   try {
     const mainRecipe = await db.recipes.get(selectedRecipeId.value);
+
+    // Initial check for ingredients list
+    if (
+      !mainRecipe.ingredientsList ||
+      mainRecipe.ingredientsList.length === 0
+    ) {
+      Swal.fire({
+        icon: 'error',
+        title: 'สูตรไม่สมบูรณ์',
+        html: 'สูตรที่คุณเลือกยังไม่มีรายการวัตถุดิบ<br>กรุณาตรวจสอบหรือไปที่หน้าสูตรขนม<br>เพื่อเพอ่มรายการวัตถุดิบ',
+      });
+      isLoading.value = false;
+      return;
+    }
+
     const totalWeightNeeded = productionQuantity.value * weightPerPiece.value;
 
     let totalRecipeWeight = mainRecipe.ingredientsList.reduce(
       (sum, item) => sum + item.quantity,
       0
     );
-    if (totalRecipeWeight === 0) totalRecipeWeight = 1; // ป้องกันการหารด้วยศูนย์
+    if (totalRecipeWeight === 0) totalRecipeWeight = 1;
 
     const scalingFactor = totalWeightNeeded / totalRecipeWeight;
 
@@ -79,12 +95,26 @@ async function calculateCost() {
       };
     });
 
+    // Final check for calculated cost
+    if (foodCost <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'ไม่สามารถคำนวณต้นทุนได้',
+        text: 'ต้นทุนวัตถุดิบรวมเป็นศูนย์ อาจเนื่องมาจากยังไม่ได้ใส่ปริมาณหรือราคาของวัตถุดิบในสูตร',
+      });
+      isLoading.value = false;
+      return;
+    }
+
     calculationResult.value = {
       foodCost,
       costBreakdown,
       recipeName: mainRecipe.name,
       totalWeight: totalWeightNeeded,
     };
+
+    await nextTick();
+    resultsSection.value?.scrollIntoView({ behavior: 'smooth' });
   } catch (error) {
     console.error('Calculation Error:', error);
     Swal.fire('เกิดข้อผิดพลาด!', 'ไม่สามารถคำนวณต้นทุนได้', 'error');
@@ -213,10 +243,9 @@ const recipeOptions = computed(() => {
 </script>
 
 <template>
-  <div>
-    <h1 class="mb-6 text-3xl font-bold">เครื่องคำนวณต้นทุน</h1>
-
-    <div class="rounded-lg bg-white p-6 shadow-md">
+  <div class="mx-auto max-w-4xl">
+    <div class="rounded-lg bg-white p-4 shadow-md">
+      <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุน</h1>
       <div class="grid grid-cols-1 items-end gap-6 md:grid-cols-4">
         <div class="md:col-span-2">
           <label class="mb-1 block text-sm font-medium text-gray-700"
@@ -252,7 +281,7 @@ const recipeOptions = computed(() => {
           />
         </div>
       </div>
-      <div class="mt-5 text-right">
+      <div ref="resultsSection" class="mt-5 text-right">
         <button
           @click="calculateCost"
           :disabled="isLoading"
