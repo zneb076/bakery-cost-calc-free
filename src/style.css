@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* เราจะสร้าง class สำหรับแต่ละฟอนต์โดยตรงที่นี่
+*/
+.font-sarabun {
+  font-family: 'Sarabun', sans-serif;
+}
+
+.font-mali {
+  font-family: 'Mali', sans-serif;
+}
