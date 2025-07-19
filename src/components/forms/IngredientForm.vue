@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
 import Swal from 'sweetalert2';
+import Multiselect from '@vueform/multiselect';
 
 const props = defineProps({
   initialData: {
@@ -11,6 +12,10 @@ const props = defineProps({
       purchaseQuantity: '',
       purchasePrice: '',
     }),
+  },
+  existingNames: {
+    type: Array,
+    default: () => [],
   },
 });
 const emit = defineEmits(['save', 'cancel']);
@@ -28,9 +33,10 @@ watch(
   () => props.initialData,
   (newData) => {
     formData.value = { ...newData };
-  },
-  { immediate: true, deep: true }
+  }
 );
+
+const isEditing = computed(() => !!props.initialData.id);
 
 function handleSubmit() {
   const { name, purchaseUnit, purchaseQuantity, purchasePrice } =
@@ -77,11 +83,18 @@ function handleSubmit() {
           <label for="name" class="block text-sm font-medium"
             >ชื่อวัตถุดิบ</label
           >
-          <input
+          <Multiselect
             v-model="formData.name"
-            type="text"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+            :options="existingNames"
+            :searchable="true"
+            :create-option="true"
+            :disabled="isEditing"
+            placeholder="ค้นหาหรือพิมพ์เพื่อเพิ่มใหม่"
+            class="mt-1"
           />
+          <p v-if="isEditing" class="mt-1 text-xs text-gray-500">
+            ไม่สามารถแก้ไขชื่อวัตถุดิบได้
+          </p>
         </div>
 
         <div class="grid grid-cols-2 gap-4">

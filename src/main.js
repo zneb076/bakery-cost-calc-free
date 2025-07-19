@@ -15,7 +15,16 @@ import {
   faFont,
   faArrowUp,
   faCircleInfo,
+  faHome,
+  faCalculator,
+  faBook,
+  faListCheck,
+  faCog,
+  faBreadSlice,
+  faUtensils,
+  faCheese,
 } from '@fortawesome/free-solid-svg-icons';
+import { faFacebook } from '@fortawesome/free-brands-svg-icons'; // 1. Import faFacebook
 
 // เพิ่มไอคอนทั้งหมดที่คุณต้องการใช้ในโปรเจกต์ที่นี่
 library.add(
@@ -26,7 +35,16 @@ library.add(
   faBars,
   faFont,
   faArrowUp,
-  faCircleInfo
+  faCircleInfo,
+  faFacebook,
+  faHome,
+  faCalculator,
+  faBook,
+  faListCheck,
+  faCog,
+  faBreadSlice,
+  faUtensils,
+  faCheese
 );
 
 const app = createApp(App);

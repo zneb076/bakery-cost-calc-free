@@ -11,6 +11,8 @@ const isModalOpen = ref(false);
 const editingIngredient = ref(null);
 const searchQuery = ref('');
 
+const ingredientNames = computed(() => ingredients.value.map((i) => i.name));
+
 const filteredIngredients = computed(() => {
   if (!searchQuery.value) {
     return ingredients.value;
@@ -124,7 +126,7 @@ onMounted(fetchIngredients);
     <div class="rounded-lg bg-white p-4 shadow-md">
       <div class="overflow-x-auto">
         <div class="mb-6 flex items-center justify-between">
-          <h1 class="text-3xl font-bold">จัดการวัตถุดิบ</h1>
+          <h1 class="text-3xl font-bold">วัตถุดิบ</h1>
           <button
             @click="openAddModal"
             class="rounded-lg bg-primary px-4 py-2 font-bold text-white transition-opacity hover:bg-opacity-90"
@@ -201,6 +203,7 @@ onMounted(fetchIngredients);
     <BaseModal v-if="isModalOpen" @close="closeModal">
       <IngredientForm
         :initial-data="editingIngredient"
+        :existing-names="ingredientNames"
         @save="handleSave"
         @cancel="closeModal"
       />

@@ -26,6 +26,10 @@ const isLoading = ref(false);
 const isSubRecipeModalOpen = ref(false);
 const subRecipeToShow = ref(null);
 
+watch([productionQuantity, weightPerPiece], () => {
+  calculationResult.value = null;
+});
+
 async function fetchData() {
   try {
     const [recipes, ingredients] = await Promise.all([

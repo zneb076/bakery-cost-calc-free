@@ -177,14 +177,14 @@ onMounted(fetchData);
                     class="text-gray-500 transition-colors hover:text-secondary"
                     title="แก้ไข"
                   >
-                    <font-awesome-icon icon="pencil" size="lg" />
+                    <font-awesome-icon icon="pencil" />
                   </button>
                   <button
                     @click="deleteRecipe(recipe.id, recipe.name)"
                     class="text-gray-500 transition-colors hover:text-primary"
                     title="ลบ"
                   >
-                    <font-awesome-icon icon="trash" size="lg" />
+                    <font-awesome-icon icon="trash" />
                   </button>
                 </div>
               </td>
@@ -194,7 +194,7 @@ onMounted(fetchData);
       </div>
     </div>
 
-    <BaseModal v-if="isModalOpen" @close="closeModal">
+    <BaseModal v-if="isModalOpen" @close="closeModal" size="large">
       <RecipeForm
         :initial-data="editingRecipe"
         :available-ingredients="availableIngredients"
