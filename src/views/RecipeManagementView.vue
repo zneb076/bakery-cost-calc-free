@@ -52,7 +52,12 @@ function openQuickViewModal(recipe) {
 }
 
 function openAddModal() {
-  editingRecipe.value = { name: '', isSubRecipe: false, ingredientsList: [] };
+  editingRecipe.value = {
+    name: '',
+    isSubRecipe: false,
+    ingredientsList: [],
+    notes: '',
+  };
   isModalOpen.value = true;
 }
 
@@ -67,15 +72,11 @@ function closeModal() {
 }
 
 async function handleSave(recipeData) {
+  const plainRecipeData = JSON.parse(JSON.stringify(recipeData));
   try {
-    // Convert the reactive object to a plain JavaScript object
-    const plainRecipeData = JSON.parse(JSON.stringify(recipeData));
-
     if (plainRecipeData.id) {
-      // Use the plain object for updating
       await db.recipes.update(plainRecipeData.id, plainRecipeData);
     } else {
-      // Use the plain object for adding
       await db.recipes.add(plainRecipeData);
     }
 
@@ -179,7 +180,7 @@ onMounted(fetchData);
                   สูตรย่อย
                 </span>
               </td>
-              <td class="px-4 py-3 text-center">
+              <td class="w-24 py-3 text-right">
                 <div class="flex items-center justify-center space-x-4">
                   <button
                     @click="openQuickViewModal(recipe)"

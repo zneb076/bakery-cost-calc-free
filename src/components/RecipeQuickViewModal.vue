@@ -153,5 +153,9 @@ async function saveAsImage() {
         :scaling-factor="scalingFactor"
       />
     </div>
+    <div v-if="recipe.notes" class="mt-4 rounded-md border p-4">
+      <h4 class="mb-2 font-semibold">โน้ต / วิธีทำ:</h4>
+      <p class="whitespace-pre-wrap text-gray-700">{{ recipe.notes }}</p>
+    </div>
   </div>
 </template>

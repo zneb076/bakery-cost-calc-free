@@ -172,6 +172,18 @@ function handleSubmit() {
           </div>
         </div>
 
+        <div>
+          <label class="block text-sm font-medium text-gray-700"
+            >โน้ต / วิธีทำ (เว้นว่างได้)</label
+          >
+          <textarea
+            v-model="recipe.notes"
+            rows="4"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+            placeholder="ใส่รายละเอียดวิธีทำหรือข้อความเตือนความจำ..."
+          ></textarea>
+        </div>
+
         <div class="border-t pt-6">
           <h4 class="mb-4 text-lg font-medium">รายการวัตถุดิบ</h4>
           <div class="space-y-3">
