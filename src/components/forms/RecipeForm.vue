@@ -1,7 +1,5 @@
 <script setup>
 import { ref, watch, computed } from 'vue';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import Multiselect from '@vueform/multiselect';
 import Swal from 'sweetalert2';
 
@@ -13,34 +11,47 @@ const emit = defineEmits(['save', 'cancel']);
 
 const recipe = ref({});
 
+const ingredientOptions = computed(() => {
+  return props.availableIngredients.map((item) => {
+    const isSubRecipe = !!item.isSubRecipe;
+    return {
+      label: item.name,
+      value: `${isSubRecipe ? 'recipe' : 'ingredient'}-${item.id}`,
+      isSubRecipe: isSubRecipe, // ส่งค่า isSubRecipe ไปให้ template ใช้
+    };
+  });
+});
+
 watch(
   () => props.initialData,
   (newData) => {
-    recipe.value = JSON.parse(JSON.stringify(newData));
-    if (
-      !recipe.value.ingredientsList ||
-      recipe.value.ingredientsList.length === 0
-    ) {
-      recipe.value.ingredientsList = [{ ingredientId: null, quantity: null }];
+    const deepCopy = JSON.parse(JSON.stringify(newData));
+    if (!deepCopy.ingredientsList || deepCopy.ingredientsList.length === 0) {
+      deepCopy.ingredientsList = [{ compositeId: null, quantity: null }];
+    } else {
+      deepCopy.ingredientsList = deepCopy.ingredientsList.map((item) => ({
+        ...item,
+        compositeId: `${item.itemType}-${item.itemId}`,
+      }));
     }
+    recipe.value = deepCopy;
   },
   { immediate: true, deep: true }
 );
 
-function addIngredientRow() {
-  recipe.value.ingredientsList.push({ ingredientId: null, quantity: null });
-}
-function removeIngredientRow(index) {
-  recipe.value.ingredientsList.splice(index, 1);
-}
-
+// ## ส่วนที่แก้ไข: การคำนวณ Baker's Percentage ##
 const bakerPercentage = computed(() => {
   const list = recipe.value.ingredientsList;
   if (!list || list.length === 0) return {};
 
+  // หาแป้งโดยใช้ compositeId
   const flourItem = list.find((item) => {
+    if (!item.compositeId) return false;
+    const [type, id] = item.compositeId.split('-');
+    if (type !== 'ingredient') return false;
+
     const ingredient = props.availableIngredients.find(
-      (i) => i.id === item.ingredientId
+      (i) => i.id === Number(id) && !i.isSubRecipe
     );
     return ingredient && ingredient.name.includes('แป้ง');
   });
@@ -57,13 +68,14 @@ const bakerPercentage = computed(() => {
   return percentages;
 });
 
-const ingredientOptions = computed(() => {
-  return props.availableIngredients.map((item) => ({
-    label: item.isSubRecipe ? `${item.name} (สูตรย่อย)` : item.name,
-    value: item.id,
-  }));
-});
+function addIngredientRow() {
+  recipe.value.ingredientsList.push({ compositeId: null, quantity: null });
+}
+function removeIngredientRow(index) {
+  recipe.value.ingredientsList.splice(index, 1);
+}
 
+// ## ส่วนที่แก้ไข: ฟังก์ชัน handleSubmit ที่ปรับปรุงใหม่ ##
 function handleSubmit() {
   if (!recipe.value.name) {
     Swal.fire({
@@ -74,58 +86,54 @@ function handleSubmit() {
     return;
   }
 
-  // ============================================
-  // ## ส่วนที่แก้ไข: เพิ่มการตรวจสอบที่ซับซ้อนขึ้น ##
-  // ============================================
-
-  // 1. ตรวจสอบแต่ละแถวที่ยังไม่ได้กรอง
-  for (const item of recipe.value.ingredientsList) {
-    const hasIngredient = !!item.ingredientId;
-    const hasQuantity = !!item.quantity && item.quantity > 0;
-
-    // กรณีที่ 1: มีชื่อ แต่ไม่มีปริมาณ
-    if (hasIngredient && !hasQuantity) {
-      const ingredientName =
-        ingredientOptions.value.find((opt) => opt.value === item.ingredientId)
-          ?.label || 'วัตถุดิบที่เลือก';
-      Swal.fire({
-        icon: 'error',
-        title: 'ข้อมูลไม่ครบถ้วน',
-        text: `กรุณากรอกปริมาณสำหรับ "${ingredientName}"`,
-      });
-      return; // หยุดการทำงาน
-    }
-
-    // กรณีที่ 2: มีปริมาณ แต่ไม่มีชื่อ
-    if (!hasIngredient && hasQuantity) {
-      Swal.fire({
-        icon: 'error',
-        title: 'ข้อมูลไม่ครบถ้วน',
-        text: `กรุณาเลือกวัตถุดิบสำหรับปริมาณ "${item.quantity}" กรัม`,
-      });
-      return; // หยุดการทำงาน
-    }
-  }
-
-  // 2. กรองเฉพาะแถวที่กรอกครบแล้วจริงๆ (เหมือนเดิม)
-  const filteredIngredients = recipe.value.ingredientsList.filter(
-    (item) => item.ingredientId && item.quantity && item.quantity > 0
+  // 1. กรองแถวที่กรอกข้อมูลครบถ้วนเท่านั้น
+  const validIngredients = recipe.value.ingredientsList.filter(
+    (item) =>
+      item.compositeId && typeof item.quantity === 'number' && item.quantity > 0
   );
 
-  // 3. ตรวจสอบว่าหลังจากกรองแล้ว ต้องมีอย่างน้อย 1 รายการ (เหมือนเดิม)
-  if (filteredIngredients.length === 0) {
+  // 2. ตรวจสอบแถวที่กรอกข้อมูลไม่สมบูรณ์
+  const partiallyFilled = recipe.value.ingredientsList.find(
+    (item) =>
+      (item.compositeId &&
+        !(typeof item.quantity === 'number' && item.quantity > 0)) ||
+      (!item.compositeId &&
+        typeof item.quantity === 'number' &&
+        item.quantity > 0)
+  );
+
+  if (partiallyFilled) {
     Swal.fire({
       icon: 'error',
       title: 'ข้อมูลไม่ครบถ้วน',
-      text: 'กรุณาเพิ่มวัตถุดิบอย่างน้อย 1 รายการ และกรอกข้อมูลให้ครบถ้วน',
+      text: 'กรุณากรอกข้อมูลวัตถุดิบให้ครบทุกแถว หรือลบแถวที่ไม่ต้องการออก',
     });
     return;
   }
 
-  // 4. สร้าง object ใหม่เพื่อบันทึก (เหมือนเดิม)
+  // 3. ตรวจสอบว่ามีวัตถุดิบที่สมบูรณ์อย่างน้อย 1 รายการ
+  if (validIngredients.length === 0) {
+    Swal.fire({
+      icon: 'error',
+      title: 'ข้อมูลไม่ครบถ้วน',
+      text: 'กรุณาเพิ่มวัตถุดิบอย่างน้อย 1 รายการ',
+    });
+    return;
+  }
+
+  // 4. แปลงข้อมูลกลับไปเป็นรูปแบบที่ถูกต้องสำหรับบันทึก
+  const finalIngredientsList = validIngredients.map((item) => {
+    const [type, id] = item.compositeId.split('-');
+    return {
+      itemType: type,
+      itemId: Number(id),
+      quantity: item.quantity,
+    };
+  });
+
   const recipeToSave = {
     ...recipe.value,
-    ingredientsList: filteredIngredients,
+    ingredientsList: finalIngredientsList,
   };
 
   emit('save', recipeToSave);
@@ -134,7 +142,7 @@ function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <div class="p-6">
+    <div class="p-3">
       <h3 class="mb-6 text-2xl font-semibold">
         {{ recipe.id ? 'แก้ไขสูตร' : 'เพิ่มสูตรใหม่' }}
       </h3>
@@ -173,33 +181,42 @@ function handleSubmit() {
               class="flex items-center space-x-2"
             >
               <Multiselect
-                v-model="item.ingredientId"
+                v-model="item.compositeId"
                 :options="ingredientOptions"
                 :searchable="true"
-                placeholder="วัตถุดิบ"
+                placeholder="เลือกวัตถุดิบ"
                 class="flex-grow"
-              />
-
+              >
+                <template #option="{ option }">
+                  <div class="flex items-center justify-between">
+                    <span>{{ option.label }} </span>
+                    <span
+                      v-if="option.isSubRecipe"
+                      class="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs text-white"
+                    >
+                      สูตรย่อย
+                    </span>
+                  </div>
+                </template>
+              </Multiselect>
               <input
                 v-model.number="item.quantity"
                 type="number"
                 step="0.01"
                 placeholder="กรัม"
-                class="w-[70px] appearance-none rounded-md border border-gray-300 px-3 py-2 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                class="w-[70px] appearance-none rounded rounded-md border border-gray-300 p-2 px-3 py-2 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
-
               <div class="w-24 text-center text-xs text-gray-600">
                 <span v-if="bakerPercentage[index]"
                   >{{ bakerPercentage[index] }} %</span
                 >
               </div>
-
               <button
                 @click="removeIngredientRow(index)"
                 type="button"
                 class="text-red-500 hover:text-red-700"
               >
-                <font-awesome-icon :icon="faTrash" />
+                <font-awesome-icon icon="trash" />
               </button>
             </div>
           </div>
@@ -235,5 +252,9 @@ function handleSubmit() {
   --ms-border-color: #d1d5db;
   --ms-radius: 0.375rem;
   --ms-ring-color: rgba(255, 112, 129, 0.2); /* primary color with opacity */
+}
+
+.multiselect-dropdown {
+  min-width: 250px; /* สามารถปรับความกว้างได้ตามต้องการ */
 }
 </style>

@@ -14,10 +14,20 @@ import {
   faBars,
   faFont,
   faArrowUp,
+  faCircleInfo,
 } from '@fortawesome/free-solid-svg-icons';
 
 // เพิ่มไอคอนทั้งหมดที่คุณต้องการใช้ในโปรเจกต์ที่นี่
-library.add(faPencil, faTrash, faXmark, faLanguage, faBars, faFont, faArrowUp);
+library.add(
+  faPencil,
+  faTrash,
+  faXmark,
+  faLanguage,
+  faBars,
+  faFont,
+  faArrowUp,
+  faCircleInfo
+);
 
 const app = createApp(App);
 

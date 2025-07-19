@@ -79,9 +79,16 @@ onMounted(async () => {
   if (recipeCount === 0) {
     console.log('Adding mock recipes with new structure...');
     await db.recipes.bulkAdd([
-      // เพิ่ม property 'ingredientsList: []' เข้าไปในแต่ละ object
       { name: 'บราวนี่หนึบ', isSubRecipe: false, ingredientsList: [] },
-      { name: 'บัตเตอร์ครีม', isSubRecipe: true, ingredientsList: [] },
+      {
+        name: 'บัตเตอร์ครีม',
+        isSubRecipe: true,
+        // ตัวอย่างข้อมูลโครงสร้างใหม่
+        ingredientsList: [
+          { itemType: 'ingredient', itemId: 3, quantity: 200 }, // เนยจืด
+          { itemType: 'ingredient', itemId: 2, quantity: 400 }, // น้ำตาลไอซิ่ง
+        ],
+      },
       { name: 'คัพเค้กช็อกโกแลต', isSubRecipe: false, ingredientsList: [] },
     ]);
   }

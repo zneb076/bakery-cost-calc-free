@@ -117,6 +117,10 @@ function handleSubmit() {
             type="text"
             class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
           />
+          <div class="mt-2 px-2 text-xs text-gray-700">
+            (ค่าพื้นฐานคือ "กรัม" ถ้ากรอกหน่วยอื่นๆจะมีช่องให้กรอกหน่วยกรัมเพิ่ม
+            เพื่อให้ในการคำนวนต้นทุน)
+          </div>
         </div>
 
         <div v-if="!isUnitGrams" class="rounded-md bg-blue-50 p-3">
