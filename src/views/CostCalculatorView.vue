@@ -131,6 +131,7 @@ async function calculateCost() {
         cost: itemCost,
         isSubRecipe,
         id,
+        wastePercentage: isSubRecipe ? 10 : 0,
       });
     }
 
@@ -213,6 +214,30 @@ async function expandRecipe(recipe, scalingFactor) {
   return Array.from(ingredientMap.values());
 }
 
+// สร้าง breakdown สุดท้ายที่รวม waste % แล้ว
+const finalCostBreakdown = computed(() => {
+  if (!calculationResult.value) return [];
+  return calculationResult.value.costBreakdown.map((item) => {
+    if (item.isSubRecipe) {
+      const wasteFactor = 1 + Number(item.wastePercentage || 0) / 100;
+      return {
+        ...item,
+        finalQuantity: item.quantity * wasteFactor,
+        finalCost: item.cost * wasteFactor,
+      };
+    }
+    return { ...item, finalQuantity: item.quantity, finalCost: item.cost };
+  });
+});
+
+// คำนวณ food cost ใหม่จาก breakdown สุดท้าย
+const finalFoodCost = computed(() => {
+  return finalCostBreakdown.value.reduce(
+    (sum, item) => sum + item.finalCost,
+    0
+  );
+});
+
 async function showSubRecipeDetails(subRecipeId, scaledQuantity) {
   const subRecipe = allSubRecipes.value.find((r) => r.id === subRecipeId);
   if (subRecipe) {
@@ -252,19 +277,10 @@ const totalLaborCost = computed(
   () => Number(laborCostPerHour.value || 0) * Number(workHours.value || 0)
 );
 const totalOverheadCost = computed(() => {
-  if (!calculationResult.value) return 0;
-  return (
-    calculationResult.value.foodCost *
-    (Number(overheadPercent.value || 0) / 100)
-  );
+  return finalFoodCost.value * (Number(overheadPercent.value || 0) / 100);
 });
 const totalCostWithOverhead = computed(() => {
-  if (!calculationResult.value) return 0;
-  return (
-    calculationResult.value.foodCost +
-    totalLaborCost.value +
-    totalOverheadCost.value
-  );
+  return finalFoodCost.value + totalLaborCost.value + totalOverheadCost.value;
 });
 const costPerPiece = computed(() => {
   if (!productionQuantity.value || !totalCostWithOverhead.value) return 0;
@@ -392,37 +408,59 @@ const recipeOptions = computed(() => {
             </thead>
             <tbody>
               <tr
-                v-for="(item, index) in calculationResult.costBreakdown"
+                v-for="(item, index) in finalCostBreakdown"
                 :key="`${item.name}-${index}`"
                 class="border-b border-gray-200"
               >
                 <td class="px-2 py-2">
                   <div class="flex items-center">
-                    <span>{{ item.name }}</span>
-                    <button
-                      v-if="item.isSubRecipe"
-                      @click="showSubRecipeDetails(item.id, item.quantity)"
-                      class="ml-2 text-gray-400 hover:text-blue-700"
-                    >
-                      <font-awesome-icon icon="circle-info" />
-                    </button>
+                    <span
+                      >{{ item.name }}
+                      <button
+                        v-if="item.isSubRecipe"
+                        @click="
+                          showSubRecipeDetails(item.id, item.finalQuantity)
+                        "
+                        class="hover:text-blue-7-00 ml-2 text-blue-500"
+                      >
+                        <font-awesome-icon
+                          :icon="['fas', 'circle-info']"
+                        /></button
+                      ><br />
+                      <span v-if="item.isSubRecipe" class="text-xs"
+                        >ทำเผื่อ
+                      </span>
+                      <input
+                        v-if="item.isSubRecipe"
+                        type="number"
+                        v-model.number="
+                          calculationResult.costBreakdown[index].wastePercentage
+                        "
+                        class="mr-1 w-16 rounded-md border px-1 text-right"
+                      />
+                      <span v-if="item.isSubRecipe" class="mr-2">%</span>
+                    </span>
                   </div>
                 </td>
                 <td class="w-24 px-2 py-2 text-right">
-                  {{
-                    item.quantity.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
-                  }}
+                  <div class="flex items-center justify-end">
+                    {{
+                      item.finalQuantity.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })
+                    }}
+                  </div>
                 </td>
-                <td class="w-20 px-2 py-2 text-right">
-                  {{
-                    item.cost.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
-                  }}
+                <td class="w-16 px-2 py-2 text-right">
+                  <div class="flex items-center justify-end">
+                    {{
+                      item.finalCost.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })
+                    }}
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -430,7 +468,7 @@ const recipeOptions = computed(() => {
           <div class="mt-2 pr-2 text-right text-base font-bold">
             <span class="pr-2">ต้นทุนวัตถุดิบรวม</span>
             {{
-              calculationResult.foodCost.toLocaleString('en-US', {
+              finalFoodCost.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })
@@ -603,7 +641,7 @@ const recipeOptions = computed(() => {
         <ul class="list-inside list-disc space-y-2">
           <li v-for="item in subRecipeToShow.breakdown" :key="item.name">
             {{ item.name }}:
-            <span class="font-mono">{{ item.quantity.toFixed(2) }}</span> กรัม
+            <span class="font-bold">{{ item.quantity.toFixed(2) }}</span> กรัม
           </li>
         </ul>
         <div class="mt-6 text-right">
