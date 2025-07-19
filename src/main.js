@@ -27,6 +27,10 @@ import {
   faEye,
   faSave,
   faFloppyDisk,
+  faDatabase,
+  faTools,
+  faChevronDown,
+  faChevronUp,
 } from '@fortawesome/free-solid-svg-icons';
 import { faFacebook } from '@fortawesome/free-brands-svg-icons'; // 1. Import faFacebook
 
@@ -51,7 +55,11 @@ library.add(
   faCheese,
   faEye,
   faSave,
-  faFloppyDisk
+  faFloppyDisk,
+  faDatabase,
+  faTools,
+  faChevronDown,
+  faChevronUp
 );
 
 const app = createApp(App);

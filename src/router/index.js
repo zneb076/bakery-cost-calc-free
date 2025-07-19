@@ -3,7 +3,8 @@ import HomeView from '../views/HomeView.vue';
 import CostCalculatorView from '../views/CostCalculatorView.vue';
 import RecipeManagementView from '../views/RecipeManagementView.vue';
 import IngredientManagementView from '../views/IngredientManagementView.vue';
-import SettingsView from '../views/SettingsView.vue';
+import SettingsDataView from '../views/SettingsDataView.vue'; // สร้าง View ใหม่
+import SettingsGeneralView from '../views/SettingsGeneralView.vue';
 
 const routes = [
   {
@@ -27,10 +28,16 @@ const routes = [
     name: 'Ingredients',
     component: IngredientManagementView,
   },
+
   {
-    path: '/settings',
-    name: 'Settings',
-    component: SettingsView,
+    path: '/settings/data',
+    name: 'SettingsData',
+    component: SettingsDataView,
+  },
+  {
+    path: '/settings/general',
+    name: 'SettingsGeneral',
+    component: SettingsGeneralView,
   },
 ];
 

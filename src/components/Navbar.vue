@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 
 const isMenuOpen = ref(false);
+const isSettingsSubMenuOpen = ref(false);
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -13,7 +14,14 @@ const menuItems = [
   { text: '1. จัดการวัตถุดิบ', name: 'Ingredients', icon: 'cheese' },
   { text: '2. จัดการสูตรขนม', name: 'Recipes', icon: 'book' },
   { text: '3. คำนวณต้นทุน', name: 'Calculator', icon: 'calculator' },
-  { text: 'ตั้งค่า', name: 'Settings', icon: 'cog' },
+  {
+    text: 'ตั้งค่า',
+    icon: 'cog',
+    children: [
+      { text: 'สำรอง/กู้คืนข้อมูล', name: 'SettingsData', icon: 'database' },
+      { text: 'ทั่วไป', name: 'SettingsGeneral', icon: 'tools' },
+    ],
+  },
 ];
 
 const emit = defineEmits(['toggle-font']);
@@ -95,13 +103,45 @@ const emit = defineEmits(['toggle-font']);
       <ul class="mt-8 flex flex-col space-y-2">
         <li v-for="item in menuItems" :key="item.text">
           <router-link
+            v-if="!item.children"
             :to="{ name: item.name }"
             @click="toggleMenu"
-            class="flex w-full items-center space-x-4 px-8 py-3 text-lg transition-colors hover:bg-gray-700"
+            class="flex w-full items-center space-x-4 px-8 py-3 text-lg hover:bg-gray-700"
           >
             <font-awesome-icon :icon="item.icon" class="w-6" />
             <span>{{ item.text }}</span>
           </router-link>
+
+          <div v-else>
+            <button
+              @click="isSettingsSubMenuOpen = !isSettingsSubMenuOpen"
+              class="flex w-full items-center space-x-4 px-8 py-3 text-lg hover:bg-gray-700"
+            >
+              <div class="flex items-center space-x-4">
+                <font-awesome-icon :icon="item.icon" class="w-6" />
+                <span>{{ item.text }}</span>
+              </div>
+              <span
+                :class="{ 'rotate-180': isSettingsSubMenuOpen }"
+                class="transition-transform"
+                ><font-awesome-icon icon="chevron-down"
+              /></span>
+            </button>
+            <ul v-if="isSettingsSubMenuOpen" class="bg-gray-800">
+              <li v-for="child in item.children" :key="child.text">
+                <router-link
+                  :to="{ name: child.name }"
+                  @click="toggleMenu"
+                  class="flex w-full items-center py-2 pl-16 pr-8 text-base hover:bg-gray-700"
+                >
+                  <div class="flex items-center space-x-4">
+                    <font-awesome-icon :icon="child.icon" class="w-6" />
+                    <span>{{ child.text }}</span>
+                  </div>
+                </router-link>
+              </li>
+            </ul>
+          </div>
         </li>
       </ul>
       <div class="mt-auto p-4 text-center">

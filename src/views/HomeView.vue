@@ -74,8 +74,14 @@
         target="_blank"
         class="inline-flex items-center space-x-2 text-blue-600 no-underline transition-colors hover:no-underline"
       >
-        <font-awesome-icon :icon="['fab', 'facebook']" size="lg" />
-        <span class="font-semibold">ขออีกคำ - homemade bakery</span>
+        <font-awesome-icon
+          :icon="['fab', 'facebook']"
+          size="lg"
+          class="text-secondary"
+        />
+        <span class="font-semibold text-secondary"
+          >ขออีกคำ - homemade bakery</span
+        >
       </a>
     </div>
   </div>
