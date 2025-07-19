@@ -16,10 +16,11 @@ const selectedRecipeId = ref(null);
 const productionQuantity = ref(10);
 const weightPerPiece = ref(50);
 
-const laborCostPerHour = ref(50);
-const workHours = ref(4);
-const overheadPercent = ref(30);
+const laborCostPerHour = ref(0);
+const workHours = ref(0);
+const overheadPercent = ref(0);
 const finalSellingPricePerPiece = ref(0);
+const defaultProfitMargin = ref(0);
 
 const calculationResult = ref(null);
 const isLoading = ref(false);
@@ -43,7 +44,20 @@ async function fetchData() {
     console.error('Failed to fetch data:', error);
   }
 }
-onMounted(fetchData);
+
+onMounted(async () => {
+  // โหลดค่าเริ่มต้นจากฐานข้อมูล
+  const savedSettings = await db.settings.toArray();
+  const settingsMap = new Map(savedSettings.map((s) => [s.key, s.value]));
+
+  laborCostPerHour.value = settingsMap.get('laborCostPerHour') || 50;
+  workHours.value = settingsMap.get('workHours') || 4;
+  overheadPercent.value = settingsMap.get('overheadPercent') || 30;
+  defaultProfitMargin.value = settingsMap.get('defaultProfitMargin') || 50;
+  // ... สามารถโหลดค่าอื่นๆ มาใช้ได้เช่นกัน
+
+  fetchData(); // เรียกฟังก์ชันดึงข้อมูลเดิม
+});
 
 async function calculateCost() {
   if (!selectedRecipeId.value) {
@@ -286,7 +300,13 @@ const costPerPiece = computed(() => {
   if (!productionQuantity.value || !totalCostWithOverhead.value) return 0;
   return totalCostWithOverhead.value / Number(productionQuantity.value || 1);
 });
-const suggestedSellingPricePerPiece = computed(() => costPerPiece.value * 1.5);
+
+const suggestedSellingPricePerPiece = computed(() => {
+  return (
+    costPerPiece.value * (1 + Number(defaultProfitMargin.value || 0) / 100)
+  );
+});
+
 watch(
   suggestedSellingPricePerPiece,
   (newValue) => {
@@ -540,7 +560,8 @@ const recipeOptions = computed(() => {
                 class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-center text-3xl font-bold text-secondary"
               />
               <div class="mt-2 pl-1 text-xs">
-                - ราคาขายที่คำนวนมาเป็นราคา +50% จากต้นทุน<br />
+                - ราคาขายที่คำนวนมาเป็นราคา +{{ defaultProfitMargin }}%
+                จากต้นทุน<br />
                 - สามารถตั้งราคาใหม่ได้เพื่อดูกำไรที่ต้องการ
                 <div class="pr-1 text-xs text-red-600">
                   - (ราคาขายต่ำกว่า {{ costPerPiece.toFixed(2) }} บาทจะขาดทุน)

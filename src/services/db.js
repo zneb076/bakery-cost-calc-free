@@ -2,6 +2,13 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('khoEakKhamDB');
 
+db.version(6).stores({
+  ingredients:
+    '++id, &name, purchaseUnit, purchaseQuantity, purchasePrice, costPerGram',
+  recipes: '++id, &name, isSubRecipe, ingredientsList, notes',
+  settings: '&key, value', // ตารางใหม่: key ที่ไม่ซ้ำกัน และ value
+});
+
 // เพิ่มเวอร์ชันใหม่เป็น 5
 db.version(5).stores({
   ingredients:

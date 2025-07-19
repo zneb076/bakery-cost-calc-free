@@ -13,7 +13,13 @@ const menuItems = [
   { text: 'หน้าหลัก', name: 'Home', icon: 'home' },
   { text: '1. จัดการวัตถุดิบ', name: 'Ingredients', icon: 'cheese' },
   { text: '2. จัดการสูตรขนม', name: 'Recipes', icon: 'book' },
-  { text: '3. คำนวณต้นทุน', name: 'Calculator', icon: 'calculator' },
+  { text: '3. คำนวณต้นทุน (Basic)', name: 'Calculator', icon: 'calculator' },
+  {
+    text: '4. คำนวณต้นทุน (Advance) (Coming Soon)',
+    name: 'Calculator',
+    icon: 'chart-line',
+    disabled: true,
+  },
   {
     text: 'ตั้งค่า',
     icon: 'cog',
@@ -93,7 +99,7 @@ const emit = defineEmits(['toggle-font']);
   >
     <div
       v-if="isMenuOpen"
-      class="fixed right-0 top-0 z-50 flex h-full w-64 flex-col bg-[#1F2937] text-white shadow-lg"
+      class="fixed right-0 top-0 z-50 flex h-full w-[350px] flex-col bg-[#1F2937] text-white shadow-lg"
     >
       <div class="flex justify-end p-4">
         <button @click="toggleMenu">
@@ -102,46 +108,45 @@ const emit = defineEmits(['toggle-font']);
       </div>
       <ul class="mt-8 flex flex-col space-y-2">
         <li v-for="item in menuItems" :key="item.text">
-          <router-link
-            v-if="!item.children"
-            :to="{ name: item.name }"
-            @click="toggleMenu"
-            class="flex w-full items-center space-x-4 px-8 py-3 text-lg hover:bg-gray-700"
+          <component
+            :is="
+              item.disabled ? 'span' : item.children ? 'button' : 'router-link'
+            "
+            :to="item.children ? null : { name: item.name }"
+            @click="
+              item.children
+                ? (isSettingsSubMenuOpen = !isSettingsSubMenuOpen)
+                : toggleMenu()
+            "
+            :class="[
+              'flex w-full items-center space-x-4 px-8 py-3 text-lg',
+              item.disabled
+                ? 'cursor-not-allowed text-gray-500'
+                : 'hover:bg-gray-700',
+            ]"
+            :title="item.disabled ? 'Coming Soon' : ''"
           >
             <font-awesome-icon :icon="item.icon" class="w-6" />
             <span>{{ item.text }}</span>
-          </router-link>
+            <span
+              v-if="item.children"
+              :class="{ 'rotate-180': isSettingsSubMenuOpen }"
+              class="ml-auto transition-transform"
+              ><font-awesome-icon icon="chevron-down"
+            /></span>
+          </component>
 
-          <div v-else>
-            <button
-              @click="isSettingsSubMenuOpen = !isSettingsSubMenuOpen"
-              class="flex w-full items-center space-x-4 px-8 py-3 text-lg hover:bg-gray-700"
-            >
-              <div class="flex items-center space-x-4">
-                <font-awesome-icon :icon="item.icon" class="w-6" />
-                <span>{{ item.text }}</span>
-              </div>
-              <span
-                :class="{ 'rotate-180': isSettingsSubMenuOpen }"
-                class="transition-transform"
-                ><font-awesome-icon icon="chevron-down"
-              /></span>
-            </button>
-            <ul v-if="isSettingsSubMenuOpen" class="bg-gray-800">
-              <li v-for="child in item.children" :key="child.text">
-                <router-link
-                  :to="{ name: child.name }"
-                  @click="toggleMenu"
-                  class="flex w-full items-center py-2 pl-16 pr-8 text-base hover:bg-gray-700"
-                >
-                  <div class="flex items-center space-x-4">
-                    <font-awesome-icon :icon="child.icon" class="w-6" />
-                    <span>{{ child.text }}</span>
-                  </div>
-                </router-link>
-              </li>
-            </ul>
-          </div>
+          <ul v-if="item.children && isSettingsSubMenuOpen" class="bg-gray-800">
+            <li v-for="child in item.children" :key="child.text">
+              <router-link
+                :to="{ name: child.name }"
+                @click="toggleMenu"
+                class="flex w-full items-center py-2 pl-16 pr-8 text-base hover:bg-gray-700"
+              >
+                {{ child.text }}
+              </router-link>
+            </li>
+          </ul>
         </li>
       </ul>
       <div class="mt-auto p-4 text-center">
@@ -150,7 +155,10 @@ const emit = defineEmits(['toggle-font']);
           alt="Logo"
           class="mx-auto mb-2 h-16 w-16 opacity-95"
         />
-        <p class="mb-5 text-sm text-gray-400">by ขออีกคำ - homemade bakery</p>
+        <div class="mb-5 text-sm text-gray-400">
+          by ขออีกคำ - homemade bakery
+          <div class="xs text-gray-500">App v.1.0</div>
+        </div>
       </div>
     </div>
   </transition>
