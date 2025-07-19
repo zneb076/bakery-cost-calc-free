@@ -13,12 +13,12 @@ const finalRecipes = ref([]);
 const allIngredients = ref([]);
 const allSubRecipes = ref([]);
 const selectedRecipeId = ref(null);
-const productionQuantity = ref(100);
+const productionQuantity = ref(10);
 const weightPerPiece = ref(50);
 
 const laborCostPerHour = ref(50);
-const workHours = ref(2);
-const overheadPercent = ref(15);
+const workHours = ref(4);
+const overheadPercent = ref(30);
 const finalSellingPricePerPiece = ref(0);
 
 const calculationResult = ref(null);
