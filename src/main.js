@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import './style.css';
 import App from './App.vue';
 import router from './router';
+import RecipeSheetRow from './components/RecipeSheetRow.vue';
 
 /* Font Awesome Configuration */
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -23,6 +24,9 @@ import {
   faBreadSlice,
   faUtensils,
   faCheese,
+  faEye,
+  faSave,
+  faFloppyDisk,
 } from '@fortawesome/free-solid-svg-icons';
 import { faFacebook } from '@fortawesome/free-brands-svg-icons'; // 1. Import faFacebook
 
@@ -44,7 +48,10 @@ library.add(
   faCog,
   faBreadSlice,
   faUtensils,
-  faCheese
+  faCheese,
+  faEye,
+  faSave,
+  faFloppyDisk
 );
 
 const app = createApp(App);
@@ -53,5 +60,5 @@ app.use(router);
 
 // ลงทะเบียน FontAwesomeIcon component ให้ใช้ได้ทั่วทั้งโปรเจกต์
 app.component('font-awesome-icon', FontAwesomeIcon);
-
+app.component('RecipeSheetRow', RecipeSheetRow);
 app.mount('#app');

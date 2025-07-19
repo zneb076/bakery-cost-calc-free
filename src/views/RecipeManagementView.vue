@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 
 import BaseModal from '../components/BaseModal.vue';
 import RecipeForm from '../components/forms/RecipeForm.vue';
+import RecipeQuickViewModal from '../components/RecipeQuickViewModal.vue';
 
 const recipes = ref([]);
 const availableIngredients = ref([]);
@@ -12,6 +13,8 @@ const availableIngredients = ref([]);
 const isModalOpen = ref(false);
 const editingRecipe = ref(null);
 const searchQuery = ref('');
+const isQuickViewModalOpen = ref(false);
+const recipeForQuickView = ref(null);
 
 // Computed property to filter recipes based on search query
 const filteredRecipes = computed(() => {
@@ -40,6 +43,12 @@ async function fetchData() {
     console.error('Failed to fetch data:', error);
     Swal.fire('เกิดข้อผิดพลาด!', 'ไม่สามารถดึงข้อมูลได้', 'error');
   }
+}
+
+// ฟังก์ชันใหม่สำหรับเปิด Modal
+function openQuickViewModal(recipe) {
+  recipeForQuickView.value = recipe;
+  isQuickViewModalOpen.value = true;
 }
 
 function openAddModal() {
@@ -173,6 +182,13 @@ onMounted(fetchData);
               <td class="px-4 py-3 text-center">
                 <div class="flex items-center justify-center space-x-4">
                   <button
+                    @click="openQuickViewModal(recipe)"
+                    class="text-gray-500 transition-colors hover:text-green-600"
+                    title="ดูสูตรด่วน"
+                  >
+                    <font-awesome-icon icon="eye" />
+                  </button>
+                  <button
                     @click="openEditModal(recipe)"
                     class="text-gray-500 transition-colors hover:text-secondary"
                     title="แก้ไข"
@@ -200,6 +216,17 @@ onMounted(fetchData);
         :available-ingredients="availableIngredients"
         @save="handleSave"
         @cancel="closeModal"
+      />
+    </BaseModal>
+
+    <BaseModal
+      v-if="isQuickViewModalOpen"
+      @close="isQuickViewModalOpen = false"
+    >
+      <RecipeQuickViewModal
+        v-if="recipeForQuickView"
+        :recipe="recipeForQuickView"
+        :all-ingredients-and-sub-recipes="availableIngredients"
       />
     </BaseModal>
   </div>
