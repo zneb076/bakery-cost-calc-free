@@ -2,6 +2,22 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('khoEakKhamDB');
 
+db.version(8).stores({
+  // เพิ่ม standardWeightInGrams
+  ingredients:
+    '++id, &name, purchaseUnit, purchaseQuantity, purchasePrice, costPerGram, defaultYield, costByWholeUnit, standardWeightInGrams',
+  recipes: '++id, &name, isSubRecipe, ingredientsList, notes',
+  settings: '&key, value',
+});
+
+db.version(7).stores({
+  // เพิ่ม defaultYield และ costByWholeUnit
+  ingredients:
+    '++id, &name, purchaseUnit, purchaseQuantity, purchasePrice, costPerGram, defaultYield, costByWholeUnit',
+  recipes: '++id, &name, isSubRecipe, ingredientsList, notes',
+  settings: '&key, value',
+});
+
 db.version(6).stores({
   ingredients:
     '++id, &name, purchaseUnit, purchaseQuantity, purchasePrice, costPerGram',

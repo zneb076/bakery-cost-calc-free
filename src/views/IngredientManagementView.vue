@@ -79,7 +79,11 @@ async function handleSave(formData) {
     await fetchIngredients();
   } catch (error) {
     console.error('Save failed:', error);
-    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+    Swal.fire(
+      'เกิดข้อผิดพลาด',
+      'ไม่สามารถบันทึกข้อมูลได้ อาจเกิดจากชื่อวัตถุดิบซ้ำกัน หรือฐานข้อมูลผิดพลาด กรุณาลองใหม่',
+      'error'
+    );
   }
 }
 

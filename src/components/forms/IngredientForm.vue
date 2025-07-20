@@ -9,8 +9,11 @@ const props = defineProps({
     default: () => ({
       name: '',
       purchaseUnit: 'กรัม',
-      purchaseQuantity: '',
-      purchasePrice: '',
+      purchaseQuantity: null,
+      purchasePrice: null,
+      defaultYield: 100,
+      costByWholeUnit: false,
+      standardWeightInGrams: null,
     }),
   },
   existingNames: {
@@ -20,89 +23,79 @@ const props = defineProps({
 });
 const emit = defineEmits(['save', 'cancel']);
 
-const formData = ref({ ...props.initialData });
-// เพิ่ม state สำหรับเก็บน้ำหนักมาตรฐาน
-const standardWeight = ref(50); // ค่าเริ่มต้นสำหรับไข่/ของเหลว
-
-// computed property เพื่อเช็คว่าหน่วยเป็นกรัมหรือไม่
-const isUnitGrams = computed(
-  () => formData.value.purchaseUnit.trim().toLowerCase() === 'กรัม'
-);
-
-const isEditing = computed(() => !!props.initialData.id);
-const multiselectRef = ref(null);
-const priceInputRef = ref(null);
-
-const searchText = ref('');
+const formData = ref({});
 const autocompleteRef = ref(null);
+const isEditing = computed(() => !!props.initialData.id);
 
-onMounted(() => {
-  autocompleteRef.value?.focus();
+const isUnitNotGrams = computed(() => {
+  return (
+    formData.value.purchaseUnit &&
+    formData.value.purchaseUnit.trim().toLowerCase() !== 'กรัม'
+  );
 });
 
 watch(
   () => props.initialData,
   (newData) => {
     formData.value = { ...newData };
+    // **FIX:** Ensure defaultYield always has a value
+    if (formData.value.defaultYield == null) {
+      formData.value.defaultYield = 100;
+    }
   },
   { immediate: true, deep: true }
 );
 
-function moveToNextInput() {
-  // ใช้ nextTick เพื่อรอให้ค่า update เสร็จก่อนย้าย focus
+onMounted(() => {
+  autocompleteRef.value?.focus();
+});
+
+function focusNext(nextElementId) {
   nextTick(() => {
-    priceInputRef.value?.focus();
+    document.getElementById(nextElementId)?.focus();
   });
-}
-// ฟังก์ชันสำหรับจัดการเมื่อมีการสร้าง tag ใหม่
-function handleTag(newTagName) {
-  formData.value.name = newTagName;
-  moveToNextInput();
-}
-
-function handleSelect(selectedName) {
-  searchText.value = selectedName;
-  formData.value.name = selectedName;
-  priceInputRef.value?.focus();
-}
-
-// อัปเดตค่าเมื่อพิมพ์
-function handleSearchChange(query) {
-  searchText.value = query;
-  formData.value.name = query;
 }
 
 function handleSubmit() {
-  const { name, purchaseUnit, purchaseQuantity, purchasePrice } =
-    formData.value;
+  const {
+    name,
+    purchaseUnit,
+    purchaseQuantity,
+    purchasePrice,
+    standardWeightInGrams,
+  } = formData.value;
 
   if (!name || !purchaseUnit || !purchaseQuantity || !purchasePrice) {
     Swal.fire({
       icon: 'error',
       title: 'ข้อมูลไม่ครบถ้วน',
-      text: 'กรุณากรอกข้อมูลวัตถุดิบให้ครบทุกช่อง',
+      text: 'กรุณากรอกข้อมูลหลักให้ครบ',
     });
     return;
   }
 
   let costPerGram = 0;
-  if (isUnitGrams.value) {
-    costPerGram = purchasePrice / purchaseQuantity;
-  } else {
-    // คำนวณสำหรับหน่วยอื่นๆ
-    if (!standardWeight.value || standardWeight.value <= 0) {
-      alert('กรุณากรอกน้ำหนักมาตรฐานเป็นกรัม');
+  if (isUnitNotGrams.value) {
+    if (!standardWeightInGrams || standardWeightInGrams <= 0) {
+      Swal.fire({
+        icon: 'error',
+        title: 'ข้อมูลไม่ครบถ้วน',
+        text: 'กรุณากรอกน้ำหนักมาตรฐานเป็นกรัม',
+      });
       return;
     }
-    const totalGrams = purchaseQuantity * standardWeight.value;
+    const totalGrams = purchaseQuantity * standardWeightInGrams;
     costPerGram = purchasePrice / totalGrams;
+  } else {
+    costPerGram = purchasePrice / purchaseQuantity;
   }
 
-  // ส่งข้อมูลที่คำนวณแล้วกลับไป
-  emit('save', {
+  const dataToSave = {
     ...formData.value,
     costPerGram: costPerGram,
-  });
+  };
+
+  emit('save', dataToSave);
 }
 </script>
 
@@ -114,76 +107,113 @@ function handleSubmit() {
       </h3>
       <div class="space-y-4">
         <div>
-          <label for="name" class="block text-sm font-medium"
+          <label class="block text-sm font-medium text-gray-700"
             >ชื่อวัตถุดิบ</label
           >
           <CustomAutocomplete
+            ref="autocompleteRef"
             v-model="formData.name"
             :options="existingNames"
             :disabled="isEditing"
             :creatable="true"
-            @selection-made="moveToNextInput"
+            @selection-made="focusNext('price-input')"
             class="mt-1"
           ></CustomAutocomplete>
-          <p v-if="isEditing" class="mt-1 text-xs text-gray-500">
-            ไม่สามารถแก้ไขชื่อวัตถุดิบได้
-          </p>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="price" class="block text-sm font-medium"
-              >ราคาที่ซื้อ (บาท)</label
-            >
+            <label class="block text-sm font-medium">ราคาที่ซื้อ (บาท)</label>
             <input
-              ref="priceInputRef"
+              id="price-input"
               v-model.number="formData.purchasePrice"
+              @keydown.enter.prevent="focusNext('quantity-input')"
               type="number"
               step="0.01"
               class="mt-1 w-full rounded-md border p-2"
             />
           </div>
           <div>
-            <label for="quantity" class="block text-sm font-medium"
-              >จำนวนที่ซื้อ</label
-            >
+            <label class="block text-sm font-medium">จำนวนที่ซื้อ</label>
             <input
+              id="quantity-input"
               v-model.number="formData.purchaseQuantity"
+              @keydown.enter.prevent="focusNext('unit-input')"
               type="number"
-              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+              class="mt-1 w-full rounded-md border p-2"
             />
           </div>
         </div>
 
         <div>
-          <label for="unit" class="block text-sm font-medium"
-            >หน่วยที่ซื้อ (เช่น กรัม, ฟอง, กล่อง)</label
-          >
+          <label class="block text-sm font-medium">หน่วยที่ซื้อ</label>
           <input
+            id="unit-input"
             v-model="formData.purchaseUnit"
+            @keydown.enter.prevent
             type="text"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+            class="mt-1 w-full rounded-md border p-2"
           />
-          <div class="mt-2 px-2 text-xs text-gray-700">
-            (ค่าพื้นฐานคือ "กรัม" ถ้ากรอกหน่วยอื่นๆจะมีช่องให้กรอกหน่วยกรัมเพิ่ม
-            เพื่อให้ในการคำนวนต้นทุน)
-          </div>
         </div>
 
-        <div v-if="!isUnitGrams" class="rounded-md bg-blue-50 p-3">
-          <label
-            for="standard-weight"
-            class="block text-sm font-medium text-blue-800"
+        <div v-if="isUnitNotGrams" class="rounded-md bg-blue-50 p-3">
+          <label class="block text-sm font-medium text-blue-800"
             >น้ำหนักมาตรฐานต่อ 1 หน่วย (กรัม)</label
           >
-          <p class="mb-1 text-xs text-gray-500">
-            เช่น ไข่ 1 ฟองหนัก 50 กรัม, นม 1 กล่องมี 200 กรัม
-          </p>
+          <p class="mb-1 text-xs text-gray-500">เช่น ไข่ 1 ฟองหนัก 50 กรัม</p>
           <input
-            v-model.number="standardWeight"
+            v-model.number="formData.standardWeightInGrams"
             type="number"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+            class="mt-1 block w-full rounded-md border p-2"
           />
+        </div>
+
+        <div class="mt-4 border-t pt-4">
+          <h4 class="mb-2 font-semibold text-gray-800">
+            การตั้งค่าต้นทุน (ทางเลือก)
+          </h4>
+          <p class="mb-4 text-sm text-gray-500">
+            2 ส่วนนี้เป็นค่าที่ตั้งไว้ล่วงหน้าเพื่อการคำนวณที่แม่นยำขึ้น
+            หากไม่ต้องการใช้งาน สามารถเลื่อนลงไปบันทึกได้เลย
+          </p>
+
+          <div>
+            <label class="block text-sm font-medium text-secondary"
+              >1. Yield เริ่มต้น (%)</label
+            >
+            <input
+              v-model.number="formData.defaultYield"
+              type="number"
+              min="0"
+              max="100"
+              class="mt-1 w-full rounded-md border p-2"
+            />
+            <p class="mt-1 text-xs text-gray-600">
+              เปอร์เซ็นต์ส่วนที่ใช้ได้หลังการเตรียม (เช่น ปอกเปลือกแล้วเหลือ
+              80%)
+            </p>
+          </div>
+
+          <div class="mt-4">
+            <div class="flex items-center">
+              <input
+                id="costByWholeUnit"
+                v-model="formData.costByWholeUnit"
+                type="checkbox"
+                class="h-4 w-4 rounded border-gray-300 text-primary"
+              />
+              <label
+                for="costByWholeUnit"
+                class="ml-2 block text-sm text-secondary"
+              >
+                2. คิดต้นทุนเต็มหน่วยเสมอ
+              </label>
+            </div>
+            <p class="ml-6 mt-1 text-xs text-gray-600">
+              (สำหรับวัตถุดิบที่ต้องใช้ทั้งหน่วย เช่น ไข่ไก่ ตอกใช้แค่ส่วนหนึ่ง
+              ที่เหลือต้องทิ้ง จะคิดทุนทั้งฟอง)
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -191,11 +221,14 @@ function handleSubmit() {
       <button
         type="button"
         @click="emit('cancel')"
-        class="rounded-md border border-gray-300 bg-white px-4 py-2"
+        class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
       >
         ยกเลิก
       </button>
-      <button type="submit" class="rounded-md bg-primary px-4 py-2 text-white">
+      <button
+        type="submit"
+        class="rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-opacity-90"
+      >
         บันทึก
       </button>
     </div>
