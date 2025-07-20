@@ -34,13 +34,6 @@ const itemQuantity = computed(() => {
 const requiredQuantity = computed(() => {
   return Number(props.item.quantity || 0) * props.scalingFactor;
 });
-
-// **NEW:** คำนวณปริมาณที่ต้องซื้อจริง (Gross Quantity)
-const grossQuantity = computed(() => {
-  const yieldFactor = Number(props.item.yield || 100) / 100;
-  if (yieldFactor === 0) return 0;
-  return requiredQuantity.value / yieldFactor;
-});
 </script>
 
 <template>
@@ -49,9 +42,6 @@ const grossQuantity = computed(() => {
       class="flex items-center border-b py-2"
       :style="{ paddingLeft: `${level * 20}px` }"
     >
-      <span class="text-right font-mono"
-        >{{ grossQuantity.toFixed(2) }} กรัม</span
-      >
       <button
         v-if="isSubRecipe"
         @click="isExpanded = !isExpanded"

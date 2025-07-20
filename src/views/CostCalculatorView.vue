@@ -5,7 +5,6 @@ import { useRoute } from 'vue-router';
 import Multiselect from '@vueform/multiselect';
 import Swal from 'sweetalert2';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import BaseModal from '../components/BaseModal.vue';
 
 const resultsSection = ref(null);
@@ -47,30 +46,20 @@ async function fetchData() {
 }
 
 onMounted(async () => {
-  // โหลดค่าเริ่มต้นจากฐานข้อมูล
   await fetchData();
   const savedSettings = await db.settings.toArray();
   const settingsMap = new Map(savedSettings.map((s) => [s.key, s.value]));
   if (route.query.recipeId) {
-    // แปลงเป็นตัวเลขและตั้งค่า selectedRecipeId
     selectedRecipeId.value = Number(route.query.recipeId);
   }
   laborCostPerHour.value = settingsMap.get('laborCostPerHour') || 50;
   workHours.value = settingsMap.get('workHours') || 4;
   overheadPercent.value = settingsMap.get('overheadPercent') || 30;
   defaultProfitMargin.value = settingsMap.get('defaultProfitMargin') || 50;
-  // ... สามารถโหลดค่าอื่นๆ มาใช้ได้เช่นกัน
-
-  fetchData(); // เรียกฟังก์ชันดึงข้อมูลเดิม
 });
 
 async function calculateCost() {
   if (!selectedRecipeId.value) {
-    Swal.fire({
-      icon: 'info',
-      title: 'โปรดเลือกสูตร',
-      text: 'กรุณาเลือกสูตรที่ต้องการคำนวณ',
-    });
     return;
   }
   isLoading.value = true;
@@ -82,12 +71,6 @@ async function calculateCost() {
       !mainRecipe.ingredientsList ||
       mainRecipe.ingredientsList.length === 0
     ) {
-      Swal.fire({
-        icon: 'error',
-        title: 'สูตรไม่สมบูรณ์',
-        text: 'สูตรที่คุณเลือกยังไม่มีรายการวัตถุดิบ',
-      });
-      isLoading.value = false;
       return;
     }
 
@@ -99,43 +82,80 @@ async function calculateCost() {
         0
       ) || 1;
     const scalingFactor = totalWeightNeeded / totalRecipeWeight;
-    const expandedListForCost = await expandRecipe(mainRecipe, scalingFactor);
-    const foodCost = expandedListForCost.reduce(
-      (sum, item) => sum + item.totalCost,
-      0
-    );
 
-    // 2. คำนวณหาปริมาณสุทธิที่แสดงผล (Net Quantity)
-    const expandedListForQuantity = await expandRecipe(
-      mainRecipe,
-      scalingFactor,
-      false
-    ); // ส่ง false เพื่อไม่ให้คิด Yield
+    const costBreakdown = [];
+    for (const item of mainRecipe.ingredientsList) {
+      if (!item.quantity || item.quantity <= 0) continue;
 
-    const flatIngredientList = await expandRecipe(mainRecipe, scalingFactor);
-    const costBreakdown = expandedListForCost.map((costItem) => {
-      const quantityItem = expandedListForQuantity.find(
-        (q) => q.id === costItem.id
-      );
-      return {
-        name: costItem.name,
-        quantity: quantityItem ? quantityItem.totalGrossQuantity : 0, // ปริมาณสุทธิ
-        cost: costItem.totalCost, // ต้นทุนรวม
-      };
-    });
+      const netQuantity = Number(item.quantity) * scalingFactor;
+      let itemCost = 0;
+      let name = '';
+      let isSubRecipe = false;
+      let id = null;
+      let appliedYield = false;
+      let appliedWholeUnit = false;
 
-    if (foodCost <= 0 && costBreakdown.length > 0) {
-      Swal.fire({
-        icon: 'error',
-        title: 'ไม่สามารถคำนวณต้นทุนได้',
-        text: 'ต้นทุนวัตถุดิบรวมเป็นศูนย์ อาจเนื่องมาจากยังไม่ได้ใส่ปริมาณหรือราคาของวัตถุดิบในสูตร',
+      const yieldFactor = Number(item.yield || 100) / 100;
+      if (yieldFactor < 1) appliedYield = true;
+
+      const grossQuantity = netQuantity / yieldFactor;
+
+      if (item.itemType === 'ingredient') {
+        const ingredient = allIngredients.value.find(
+          (i) => i.id === item.itemId
+        );
+        if (ingredient) {
+          name = ingredient.name;
+          id = ingredient.id;
+
+          if (
+            item.costByWholeUnit &&
+            ingredient.purchaseUnit.toLowerCase() !== 'กรัม'
+          ) {
+            appliedWholeUnit = true;
+            const weightPerUnit = Number(ingredient.standardWeightInGrams || 1);
+            const unitsNeeded = Math.ceil(grossQuantity / weightPerUnit);
+            const costPerUnit =
+              Number(ingredient.purchasePrice) /
+              Number(ingredient.purchaseQuantity);
+            itemCost = unitsNeeded * costPerUnit;
+          } else {
+            itemCost = grossQuantity * Number(ingredient.costPerGram || 0);
+          }
+        }
+      } else if (item.itemType === 'recipe') {
+        const subRecipe = allSubRecipes.value.find((r) => r.id === item.itemId);
+        if (subRecipe) {
+          name = subRecipe.name;
+          isSubRecipe = true;
+          id = subRecipe.id;
+          const flatSubIngredients = await expandRecipe(subRecipe, 1);
+          const subRecipeBaseWeight =
+            subRecipe.ingredientsList.reduce(
+              (sum, i) => sum + Number(i.quantity || 0),
+              0
+            ) || 1;
+          const subRecipeTotalCost = flatSubIngredients.reduce(
+            (sum, ing) => sum + ing.totalCost,
+            0
+          );
+          const subRecipeUnitCost = subRecipeTotalCost / subRecipeBaseWeight;
+          itemCost = netQuantity * subRecipeUnitCost;
+        }
+      }
+      costBreakdown.push({
+        name,
+        quantity: netQuantity,
+        cost: itemCost,
+        isSubRecipe,
+        id,
+        wastePercentage: isSubRecipe ? 10 : 0,
+        appliedYield,
+        appliedWholeUnit,
       });
-      isLoading.value = false;
-      return;
     }
 
     calculationResult.value = {
-      foodCost,
       costBreakdown,
       recipeName: mainRecipe.name,
       totalWeight: totalWeightNeeded,
@@ -144,14 +164,12 @@ async function calculateCost() {
     resultsSection.value?.scrollIntoView({ behavior: 'smooth' });
   } catch (error) {
     console.error('Calculation Error:', error);
-    Swal.fire('เกิดข้อผิดพลาด!', 'ไม่สามารถคำนวณต้นทุนได้', 'error');
   } finally {
     isLoading.value = false;
   }
 }
 
-// ## ส่วนที่แก้ไข: ฟังก์ชัน expandRecipe ที่สมบูรณ์ ##
-async function expandRecipe(recipe, scalingFactor, applyYield = true) {
+async function expandRecipe(recipe, scalingFactor) {
   const ingredientMap = new Map();
   for (const item of recipe.ingredientsList) {
     if (
@@ -162,9 +180,7 @@ async function expandRecipe(recipe, scalingFactor, applyYield = true) {
       continue;
 
     const netQuantity = Number(item.quantity) * scalingFactor;
-
-    // ใช้ Yield ก็ต่อเมื่อ applyYield เป็น true
-    const yieldFactor = applyYield ? Number(item.yield || 100) / 100 : 1;
+    const yieldFactor = Number(item.yield || 100) / 100;
     const grossQuantity = netQuantity / yieldFactor;
 
     if (item.itemType === 'ingredient') {
@@ -173,11 +189,13 @@ async function expandRecipe(recipe, scalingFactor, applyYield = true) {
       );
       if (baseIngredient) {
         let cost = 0;
+        let appliedWholeUnit = false;
+
         if (
-          applyYield &&
           item.costByWholeUnit &&
           baseIngredient.purchaseUnit.toLowerCase() !== 'กรัม'
         ) {
+          appliedWholeUnit = true;
           const weightPerUnit = Number(
             baseIngredient.standardWeightInGrams || 1
           );
@@ -192,14 +210,18 @@ async function expandRecipe(recipe, scalingFactor, applyYield = true) {
 
         if (ingredientMap.has(baseIngredient.id)) {
           const existing = ingredientMap.get(baseIngredient.id);
-          existing.totalGrossQuantity += grossQuantity;
+          existing.totalNetQuantity += netQuantity;
           existing.totalCost += cost;
+          if (appliedWholeUnit) existing.appliedWholeUnit = true;
+          if (yieldFactor < 1) existing.appliedYield = true;
         } else {
           ingredientMap.set(baseIngredient.id, {
             id: baseIngredient.id,
             name: baseIngredient.name,
-            totalGrossQuantity: grossQuantity,
+            totalNetQuantity: netQuantity,
             totalCost: cost,
+            appliedYield: yieldFactor < 1,
+            appliedWholeUnit: appliedWholeUnit,
           });
         }
       }
@@ -214,15 +236,16 @@ async function expandRecipe(recipe, scalingFactor, applyYield = true) {
         const subRecipeScalingFactor = grossQuantity / subRecipeTotalWeight;
         const subIngredients = await expandRecipe(
           subRecipe,
-          subRecipeScalingFactor,
-          applyYield
+          subRecipeScalingFactor
         );
 
         subIngredients.forEach((subItem) => {
           if (ingredientMap.has(subItem.id)) {
             const existing = ingredientMap.get(subItem.id);
-            existing.totalGrossQuantity += subItem.totalGrossQuantity;
+            existing.totalNetQuantity += subItem.totalNetQuantity;
             existing.totalCost += subItem.totalCost;
+            if (subItem.appliedWholeUnit) existing.appliedWholeUnit = true;
+            if (subItem.appliedYield) existing.appliedYield = true;
           } else {
             ingredientMap.set(subItem.id, subItem);
           }
@@ -233,23 +256,29 @@ async function expandRecipe(recipe, scalingFactor, applyYield = true) {
   return Array.from(ingredientMap.values());
 }
 
-// สร้าง breakdown สุดท้ายที่รวม waste % แล้ว
+const isYieldApplied = computed(() => {
+  return calculationResult.value?.costBreakdown.some(
+    (item) => item.appliedYield
+  );
+});
+const isWholeUnitCostApplied = computed(() => {
+  return calculationResult.value?.costBreakdown.some(
+    (item) => item.appliedWholeUnit
+  );
+});
+
 const finalCostBreakdown = computed(() => {
   if (!calculationResult.value) return [];
   return calculationResult.value.costBreakdown.map((item) => {
-    if (item.isSubRecipe) {
-      const wasteFactor = 1 + Number(item.wastePercentage || 0) / 100;
-      return {
-        ...item,
-        finalQuantity: item.quantity * wasteFactor,
-        finalCost: item.cost * wasteFactor,
-      };
-    }
-    return { ...item, finalQuantity: item.quantity, finalCost: item.cost };
+    const wasteFactor = 1 + Number(item.wastePercentage || 0) / 100;
+    return {
+      ...item,
+      finalQuantity: item.quantity * wasteFactor,
+      finalCost: item.cost * wasteFactor,
+    };
   });
 });
 
-// คำนวณ food cost ใหม่จาก breakdown สุดท้าย
 const finalFoodCost = computed(() => {
   return finalCostBreakdown.value.reduce(
     (sum, item) => sum + item.finalCost,
@@ -411,6 +440,23 @@ const recipeOptions = computed(() => {
         </p>
 
         <div class="overflow-x-auto">
+          <div
+            v-if="isYieldApplied || isWholeUnitCostApplied"
+            class="mb-2 flex items-center space-x-4 text-xs text-gray-500"
+          >
+            <span>*ต้นทุนรวมได้คำนวณตาม:</span>
+            <div v-if="isYieldApplied" class="flex items-center space-x-1">
+              <span class="h-2 w-2 rounded-full bg-yellow-400"></span>
+              <span>Yield</span>
+            </div>
+            <div
+              v-if="isWholeUnitCostApplied"
+              class="flex items-center space-x-1"
+            >
+              <span class="h-2 w-2 rounded-full bg-orange-400"></span>
+              <span>หน่วยเต็ม</span>
+            </div>
+          </div>
           <table class="min-w-full">
             <thead class="border-t-2 border-gray-300">
               <tr class="border-b-2 border-gray-300">
@@ -440,30 +486,46 @@ const recipeOptions = computed(() => {
                 <td class="px-2 py-2">
                   <div class="flex items-center">
                     <span
-                      >{{ item.name }}
-                      <button
-                        v-if="item.isSubRecipe"
-                        @click="
-                          showSubRecipeDetails(item.id, item.finalQuantity)
-                        "
-                        class="hover:text-blue-7-00 ml-2 text-blue-500"
-                      >
-                        <font-awesome-icon
-                          :icon="['fas', 'circle-info']"
-                        /></button
-                      ><br />
-                      <span v-if="item.isSubRecipe" class="text-xs"
-                        >ทำเผื่อ
-                      </span>
-                      <input
-                        v-if="item.isSubRecipe"
-                        type="number"
-                        v-model.number="
-                          calculationResult.costBreakdown[index].wastePercentage
-                        "
-                        class="mr-1 w-16 rounded-md border px-1 text-right"
-                      />
-                      <span v-if="item.isSubRecipe" class="mr-2">%</span>
+                      ><div class="flex items-center">
+                        <span
+                          >{{ item.name }}
+                          <span v-if="item.isSubRecipe"
+                            ><button
+                              @click="
+                                showSubRecipeDetails(
+                                  item.id,
+                                  item.finalQuantity
+                                )
+                              "
+                              class="hover:text-blue-7-00 ml-2 text-blue-500"
+                            >
+                              <font-awesome-icon
+                                :icon="['fas', 'circle-info']"
+                              /></button></span
+                        ></span>
+                        <span
+                          v-if="item.appliedYield"
+                          title="มีการคำนวณ Yield"
+                          class="ml-2 h-2 w-2 rounded-full bg-yellow-400"
+                        ></span>
+                        <span
+                          v-if="item.appliedWholeUnit"
+                          title="คิดต้นทุนเต็มหน่วย"
+                          class="ml-2 h-2 w-2 rounded-full bg-orange-400"
+                        ></span>
+                      </div>
+                      <div class="mt-1" v-if="item.isSubRecipe">
+                        <span class="text-xs">ทำเผื่อ </span>
+                        <input
+                          type="number"
+                          v-model.number="
+                            calculationResult.costBreakdown[index]
+                              .wastePercentage
+                          "
+                          class="mr-1 w-16 rounded-md border px-1 text-right"
+                        />
+                        <span class="mr-2">%</span>
+                      </div>
                     </span>
                   </div>
                 </td>
