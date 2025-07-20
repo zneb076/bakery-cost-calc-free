@@ -14,6 +14,10 @@
       <h2 class="mb-3 text-2xl font-semibold text-secondary">
         เริ่มต้นใช้งานง่ายๆ ใน 3 ขั้นตอน
       </h2>
+      <div class="mb-4">
+        ไปที่แถบเมนู <font-awesome-icon icon="bars" class="h-4 w-4" /> บนขวา
+      </div>
+
       <ul class="space-y-4 text-gray-600">
         <li class="flex items-start">
           <span

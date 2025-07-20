@@ -106,7 +106,7 @@ const emit = defineEmits(['toggle-font']);
           <font-awesome-icon icon="xmark" class="h-6 w-6" />
         </button>
       </div>
-      <ul class="mt-8 flex flex-col space-y-2">
+      <ul class="mt-4 flex flex-col space-y-2">
         <li v-for="item in menuItems" :key="item.text">
           <component
             :is="
@@ -150,15 +150,19 @@ const emit = defineEmits(['toggle-font']);
         </li>
       </ul>
       <div class="mt-auto p-4 text-center">
-        <img
-          src="/my-logo.png"
-          alt="Logo"
-          class="mx-auto mb-2 h-16 w-16 opacity-95"
-        />
-        <div class="mb-5 text-sm text-gray-400">
-          by ขออีกคำ - homemade bakery
-          <div class="xs text-gray-500">App v.1.0</div>
-        </div>
+        <a
+          href="https://www.facebook.com/profile.php?id=61556714365876"
+          target="_blank"
+          ><img
+            src="/my-logo.png"
+            alt="Logo"
+            class="mx-auto mb-2 h-16 w-16 opacity-95"
+          />
+          <div class="text-sm text-gray-400">
+            by ขออีกคำ - homemade bakery
+          </div></a
+        >
+        <div class="xs text-gray-500">App v.1.0</div>
       </div>
     </div>
   </transition>
