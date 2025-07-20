@@ -49,21 +49,14 @@ function closeModal() {
 // แก้ไขฟังก์ชันนี้ให้บันทึกข้อมูลตามโครงสร้างใหม่
 async function handleSave(formData) {
   try {
-    // สร้าง object ข้อมูลที่จะบันทึก
-    const dataToSave = {
-      name: formData.name,
-      purchaseUnit: formData.purchaseUnit,
-      purchaseQuantity: formData.purchaseQuantity,
-      purchasePrice: formData.purchasePrice,
-      costPerGram: formData.costPerGram, // field ที่คำนวณแล้วจากฟอร์ม
-    };
+    const plainData = JSON.parse(JSON.stringify(formData));
 
-    if (formData.id) {
+    if (plainData.id) {
       // Update
-      await db.ingredients.update(formData.id, dataToSave);
+      await db.ingredients.update(plainData.id, plainData);
     } else {
       // Add
-      await db.ingredients.add(dataToSave);
+      await db.ingredients.add(plainData);
     }
 
     Swal.fire({
@@ -72,18 +65,14 @@ async function handleSave(formData) {
       icon: 'success',
       title: 'บันทึกข้อมูลสำเร็จ',
       showConfirmButton: false,
-      timer: 3000,
+      timer: 1000,
     });
 
     closeModal();
     await fetchIngredients();
   } catch (error) {
     console.error('Save failed:', error);
-    Swal.fire(
-      'เกิดข้อผิดพลาด',
-      'ไม่สามารถบันทึกข้อมูลได้ อาจเกิดจากชื่อวัตถุดิบซ้ำกัน หรือฐานข้อมูลผิดพลาด กรุณาลองใหม่',
-      'error'
-    );
+    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
   }
 }
 

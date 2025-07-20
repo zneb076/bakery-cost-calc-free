@@ -25,6 +25,9 @@ const emit = defineEmits(['save', 'cancel']);
 
 const formData = ref({});
 const autocompleteRef = ref(null);
+const priceInputRef = ref(null);
+const quantityInputRef = ref(null);
+const unitInputRef = ref(null);
 const isEditing = computed(() => !!props.initialData.id);
 
 const isUnitNotGrams = computed(() => {
@@ -45,9 +48,11 @@ watch(
   () => props.initialData,
   (newData) => {
     formData.value = { ...newData };
-    // **FIX:** Ensure defaultYield always has a value
     if (formData.value.defaultYield == null) {
       formData.value.defaultYield = 100;
+    }
+    if (formData.value.costByWholeUnit == null) {
+      formData.value.costByWholeUnit = false;
     }
   },
   { immediate: true, deep: true }
@@ -57,9 +62,9 @@ onMounted(() => {
   autocompleteRef.value?.focus();
 });
 
-function focusNext(nextElementId) {
+function moveTo(targetRef) {
   nextTick(() => {
-    document.getElementById(nextElementId)?.focus();
+    targetRef.value?.focus();
   });
 }
 

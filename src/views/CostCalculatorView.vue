@@ -94,60 +94,30 @@ async function calculateCost() {
         0
       ) || 1;
     const scalingFactor = totalWeightNeeded / totalRecipeWeight;
+    const expandedListForCost = await expandRecipe(mainRecipe, scalingFactor);
+    const foodCost = expandedListForCost.reduce(
+      (sum, item) => sum + item.totalCost,
+      0
+    );
 
-    let foodCost = 0;
-    const costBreakdown = [];
+    // 2. คำนวณหาปริมาณสุทธิที่แสดงผล (Net Quantity)
+    const expandedListForQuantity = await expandRecipe(
+      mainRecipe,
+      scalingFactor,
+      false
+    ); // ส่ง false เพื่อไม่ให้คิด Yield
 
-    for (const item of mainRecipe.ingredientsList) {
-      if (!item.quantity || item.quantity <= 0) continue;
-
-      const scaledQuantity = Number(item.quantity) * scalingFactor;
-      let itemCost = 0;
-      let name = '';
-      let isSubRecipe = false;
-      let id = null;
-
-      if (item.itemType === 'ingredient') {
-        const ingredient = allIngredients.value.find(
-          (i) => i.id === item.itemId
-        );
-        if (ingredient) {
-          name = ingredient.name;
-          id = ingredient.id;
-          itemCost = scaledQuantity * Number(ingredient.costPerGram || 0);
-        }
-      } else if (item.itemType === 'recipe') {
-        const subRecipe = allSubRecipes.value.find((r) => r.id === item.itemId);
-        if (subRecipe) {
-          name = subRecipe.name;
-          isSubRecipe = true;
-          id = subRecipe.id;
-          const flatSubIngredients = await expandRecipe(subRecipe, 1);
-          const subRecipeBaseWeight =
-            subRecipe.ingredientsList.reduce(
-              (sum, i) => sum + Number(i.quantity || 0),
-              0
-            ) || 1;
-          const subRecipeTotalCost = flatSubIngredients.reduce(
-            (sum, ing) =>
-              sum +
-              Number(ing.totalQuantity || 0) * Number(ing.costPerGram || 0),
-            0
-          );
-          const subRecipeUnitCost = subRecipeTotalCost / subRecipeBaseWeight;
-          itemCost = scaledQuantity * subRecipeUnitCost;
-        }
-      }
-      foodCost += itemCost;
-      costBreakdown.push({
-        name,
-        quantity: scaledQuantity,
-        cost: itemCost,
-        isSubRecipe,
-        id,
-        wastePercentage: isSubRecipe ? 10 : 0,
-      });
-    }
+    const flatIngredientList = await expandRecipe(mainRecipe, scalingFactor);
+    const costBreakdown = expandedListForCost.map((costItem) => {
+      const quantityItem = expandedListForQuantity.find(
+        (q) => q.id === costItem.id
+      );
+      return {
+        name: costItem.name,
+        quantity: quantityItem ? quantityItem.totalGrossQuantity : 0, // ปริมาณสุทธิ
+        cost: costItem.totalCost, // ต้นทุนรวม
+      };
+    });
 
     if (foodCost <= 0 && costBreakdown.length > 0) {
       Swal.fire({
@@ -175,7 +145,8 @@ async function calculateCost() {
   }
 }
 
-async function expandRecipe(recipe, scalingFactor) {
+// ## ส่วนที่แก้ไข: ฟังก์ชัน expandRecipe ที่สมบูรณ์ ##
+async function expandRecipe(recipe, scalingFactor, applyYield = true) {
   const ingredientMap = new Map();
   for (const item of recipe.ingredientsList) {
     if (
@@ -184,20 +155,46 @@ async function expandRecipe(recipe, scalingFactor) {
       item.quantity <= 0
     )
       continue;
-    const scaledQuantity = Number(item.quantity) * scalingFactor;
+
+    const netQuantity = Number(item.quantity) * scalingFactor;
+
+    // ใช้ Yield ก็ต่อเมื่อ applyYield เป็น true
+    const yieldFactor = applyYield ? Number(item.yield || 100) / 100 : 1;
+    const grossQuantity = netQuantity / yieldFactor;
+
     if (item.itemType === 'ingredient') {
       const baseIngredient = allIngredients.value.find(
         (i) => i.id === item.itemId
       );
-      if (baseIngredient && typeof baseIngredient.costPerGram === 'number') {
+      if (baseIngredient) {
+        let cost = 0;
+        if (
+          applyYield &&
+          item.costByWholeUnit &&
+          baseIngredient.purchaseUnit.toLowerCase() !== 'กรัม'
+        ) {
+          const weightPerUnit = Number(
+            baseIngredient.standardWeightInGrams || 1
+          );
+          const unitsNeeded = Math.ceil(grossQuantity / weightPerUnit);
+          const costPerUnit =
+            Number(baseIngredient.purchasePrice) /
+            Number(baseIngredient.purchaseQuantity);
+          cost = unitsNeeded * costPerUnit;
+        } else {
+          cost = grossQuantity * Number(baseIngredient.costPerGram || 0);
+        }
+
         if (ingredientMap.has(baseIngredient.id)) {
-          ingredientMap.get(baseIngredient.id).totalQuantity += scaledQuantity;
+          const existing = ingredientMap.get(baseIngredient.id);
+          existing.totalGrossQuantity += grossQuantity;
+          existing.totalCost += cost;
         } else {
           ingredientMap.set(baseIngredient.id, {
             id: baseIngredient.id,
             name: baseIngredient.name,
-            costPerGram: Number(baseIngredient.costPerGram || 0),
-            totalQuantity: scaledQuantity,
+            totalGrossQuantity: grossQuantity,
+            totalCost: cost,
           });
         }
       }
@@ -209,15 +206,18 @@ async function expandRecipe(recipe, scalingFactor) {
             (sum, current) => sum + Number(current.quantity || 0),
             0
           ) || 1;
-        const subRecipeScalingFactor = scaledQuantity / subRecipeTotalWeight;
+        const subRecipeScalingFactor = grossQuantity / subRecipeTotalWeight;
         const subIngredients = await expandRecipe(
           subRecipe,
-          subRecipeScalingFactor
+          subRecipeScalingFactor,
+          applyYield
         );
+
         subIngredients.forEach((subItem) => {
           if (ingredientMap.has(subItem.id)) {
-            ingredientMap.get(subItem.id).totalQuantity +=
-              subItem.totalQuantity;
+            const existing = ingredientMap.get(subItem.id);
+            existing.totalGrossQuantity += subItem.totalGrossQuantity;
+            existing.totalCost += subItem.totalCost;
           } else {
             ingredientMap.set(subItem.id, subItem);
           }
@@ -340,7 +340,7 @@ const recipeOptions = computed(() => {
       <div class="grid grid-cols-1 items-end gap-6 md:grid-cols-4">
         <div class="md:col-span-2">
           <label class="mb-1 block text-sm font-medium text-gray-700"
-            >เลือกสูตรอาหาร</label
+            >เลือกสูตรขนม</label
           >
           <Multiselect
             v-model="selectedRecipeId"
@@ -677,3 +677,5 @@ const recipeOptions = computed(() => {
     </BaseModal>
   </div>
 </template>
+
+<style src="@vueform/multiselect/themes/default.css"></style>
