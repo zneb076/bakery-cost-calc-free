@@ -12,7 +12,7 @@ const props = defineProps({
 const emit = defineEmits(['save', 'cancel']);
 
 const recipe = ref({});
-const ingredientAutocompleteRefs = ref([]); // Ref for autocomplete components
+const ingredientAutocompleteRefs = ref([]);
 
 const autocompleteOptions = computed(() => {
   return props.availableIngredients.map((item) => {
@@ -26,7 +26,15 @@ watch(
   (newData) => {
     const deepCopy = JSON.parse(JSON.stringify(newData));
     if (!deepCopy.ingredientsList || deepCopy.ingredientsList.length === 0) {
-      deepCopy.ingredientsList = [{ name: '', quantity: null }];
+      deepCopy.ingredientsList = [
+        {
+          name: '',
+          quantity: null,
+          yield: 100,
+          costByWholeUnit: false,
+          showAdvanced: false,
+        },
+      ];
     } else {
       deepCopy.ingredientsList = deepCopy.ingredientsList.map((item) => {
         const uniqueId = `${item.itemType}-${item.itemId}`;
@@ -40,7 +48,14 @@ watch(
             ? `${found.name} (สูตรย่อย)`
             : found.name
           : 'วัตถุดิบถูกลบ';
-        return { ...item, name: displayName };
+        return {
+          ...item,
+          name: displayName,
+          yield: item.yield == null ? 100 : item.yield,
+          costByWholeUnit:
+            item.costByWholeUnit == null ? false : item.costByWholeUnit,
+          showAdvanced: false,
+        };
       });
     }
     recipe.value = deepCopy;
@@ -48,14 +63,44 @@ watch(
   { immediate: true, deep: true }
 );
 
-const bakerPercentage = computed(() => {
-  const list = recipe.value.ingredientsList;
-  if (!list || list.length === 0) return {};
-
-  const flourItem = list.find((item) => {
-    return item.name && item.name.includes('แป้ง');
+function onIngredientSelect(index) {
+  const selectedName = recipe.value.ingredientsList[index].name;
+  const selectedIngredient = props.availableIngredients.find(
+    (i) => (i.isSubRecipe ? `${i.name} (สูตรย่อย)` : i.name) === selectedName
+  );
+  if (selectedIngredient) {
+    recipe.value.ingredientsList[index].yield =
+      selectedIngredient.defaultYield ?? 100;
+    recipe.value.ingredientsList[index].costByWholeUnit =
+      selectedIngredient.costByWholeUnit ?? false;
+  }
+  nextTick(() => {
+    const quantityInput = document.getElementById(`quantity-${index}`);
+    quantityInput?.focus();
   });
+}
 
+async function handleEnterOnQuantity(index) {
+  if (index === recipe.value.ingredientsList.length - 1) {
+    addIngredientRow();
+    await nextTick();
+    ingredientAutocompleteRefs.value[index + 1]?.focus();
+  } else {
+    ingredientAutocompleteRefs.value[index + 1]?.focus();
+  }
+}
+
+function handleEnterOnName() {
+  ingredientAutocompleteRefs.value[0]?.focus();
+}
+
+const bakerPercentage = computed(() => {
+  if (!recipe.value || !recipe.value.ingredientsList) return {};
+  const list = recipe.value.ingredientsList;
+
+  const flourItem = list.find(
+    (item) => item.name && item.name.includes('แป้ง')
+  );
   const flourWeight = flourItem ? Number(flourItem.quantity) : 0;
   if (flourWeight === 0) return {};
 
@@ -68,30 +113,14 @@ const bakerPercentage = computed(() => {
   return percentages;
 });
 
-function onIngredientSelect(index) {
-  nextTick(() => {
-    const quantityInput = document.getElementById(`quantity-${index}`);
-    quantityInput?.focus();
-  });
-}
-
-// **NEW:** Handle Enter on quantity input
-async function handleEnterOnQuantity(index) {
-  // If it's the last row
-  if (index === recipe.value.ingredientsList.length - 1) {
-    addIngredientRow();
-    // Wait for the DOM to update with the new row
-    await nextTick();
-    // Focus on the new autocomplete input
-    ingredientAutocompleteRefs.value[index + 1]?.focus();
-  } else {
-    // If not the last row, focus on the next autocomplete
-    ingredientAutocompleteRefs.value[index + 1]?.focus();
-  }
-}
-
 function addIngredientRow() {
-  recipe.value.ingredientsList.push({ name: '', quantity: null });
+  recipe.value.ingredientsList.push({
+    name: '',
+    quantity: null,
+    yield: 100,
+    costByWholeUnit: false,
+    showAdvanced: false,
+  });
 }
 
 function removeIngredientRow(index) {
@@ -107,7 +136,6 @@ function handleSubmit() {
     });
     return;
   }
-
   const finalIngredientsList = recipe.value.ingredientsList
     .map((item) => {
       const selected = props.availableIngredients.find(
@@ -119,12 +147,13 @@ function handleSubmit() {
           itemType: selected.isSubRecipe ? 'recipe' : 'ingredient',
           itemId: selected.id,
           quantity: Number(item.quantity),
+          yield: Number(item.yield || 100),
+          costByWholeUnit: !!item.costByWholeUnit,
         };
       }
       return null;
     })
     .filter((item) => item !== null);
-
   if (finalIngredientsList.length === 0) {
     Swal.fire({
       icon: 'error',
@@ -133,19 +162,17 @@ function handleSubmit() {
     });
     return;
   }
-
   const recipeToSave = {
     ...recipe.value,
     ingredientsList: finalIngredientsList,
   };
-
   emit('save', recipeToSave);
 }
 </script>
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <div class="p-4">
+    <div class="p-2">
       <h3 class="mb-6 text-2xl font-semibold">
         {{ recipe.id ? 'แก้ไขสูตร' : 'เพิ่มสูตรใหม่' }}
       </h3>
@@ -157,6 +184,7 @@ function handleSubmit() {
             >
             <input
               v-model="recipe.name"
+              @keydown.enter.prevent="handleEnterOnName"
               type="text"
               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
             />
@@ -174,7 +202,6 @@ function handleSubmit() {
             </div>
           </div>
         </div>
-
         <div>
           <label class="block text-sm font-medium text-gray-700"
             >โน้ต / วิธีทำ</label
@@ -186,49 +213,92 @@ function handleSubmit() {
             placeholder="ใส่รายละเอียดวิธีทำหรือข้อความเตือนความจำ..."
           ></textarea>
         </div>
-
         <div class="border-t pt-6">
           <h4 class="mb-4 text-lg font-medium">รายการวัตถุดิบ</h4>
-          <div class="space-y-3">
+          <div class="space-y-1">
             <div
               v-for="(item, index) in recipe.ingredientsList"
               :key="index"
-              class="flex items-center space-x-2"
+              class="rounded-lg bg-gray-50 p-2"
             >
-              <CustomAutocomplete
-                :ref="
-                  (el) => {
-                    if (el) ingredientAutocompleteRefs[index] = el;
-                  }
-                "
-                :model-value="item.name"
-                @update:model-value="item.name = $event"
-                :options="autocompleteOptions"
-                @selection-made="onIngredientSelect(index)"
-                class="flex-grow"
-              ></CustomAutocomplete>
-
-              <input
-                :id="`quantity-${index}`"
-                v-model.number="item.quantity"
-                @keydown.enter.prevent="handleEnterOnQuantity(index)"
-                type="number"
-                step="0.01"
-                placeholder="กรัม"
-                class="w-[60px] rounded-md border px-3 py-2"
-              />
-              <div class="w-12 text-center text-xs text-gray-600">
-                <span v-if="bakerPercentage && bakerPercentage[index]"
-                  >{{ bakerPercentage[index] }} %</span
+              <div class="flex items-center space-x-1">
+                <span
+                  @click="item.showAdvanced = !item.showAdvanced"
+                  title="ตั้งค่าเพิ่มเติม"
+                  class="h-3 w-3 flex-shrink-0 cursor-pointer rounded-full transition-colors"
+                  :class="{
+                    'bg-green-500 hover:bg-green-600':
+                      item.yield < 100 || item.costByWholeUnit,
+                    'bg-gray-400 hover:bg-gray-600': !(
+                      item.yield < 100 || item.costByWholeUnit
+                    ),
+                  }"
+                ></span>
+                <div class="w-[180px]">
+                  <CustomAutocomplete
+                    :ref="
+                      (el) => {
+                        if (el) ingredientAutocompleteRefs[index] = el;
+                      }
+                    "
+                    :model-value="item.name"
+                    @update:model-value="item.name = $event"
+                    :options="autocompleteOptions"
+                    @selection-made="onIngredientSelect(index)"
+                    class="flex-grow"
+                  ></CustomAutocomplete>
+                </div>
+                <input
+                  :id="`quantity-${index}`"
+                  v-model.number="item.quantity"
+                  @keydown.enter.prevent="handleEnterOnQuantity(index)"
+                  type="number"
+                  step="0.01"
+                  placeholder="กรัม"
+                  class="w-[65px] rounded-md border px-3 py-2"
+                />
+                <div class="w-[50px] text-center text-xs text-gray-600">
+                  <span v-if="bakerPercentage && bakerPercentage[index]"
+                    >{{ bakerPercentage[index] }} %</span
+                  >
+                </div>
+                <button
+                  @click="removeIngredientRow(index)"
+                  type="button"
+                  class="text-red-500 hover:text-red-700"
                 >
+                  <font-awesome-icon icon="trash" />
+                </button>
               </div>
-              <button
-                @click="removeIngredientRow(index)"
-                type="button"
-                class="text-red-500 hover:text-red-700"
+              <div
+                v-if="item.showAdvanced"
+                class="mt-2 flex items-center space-x-4 border-t pl-6 pt-2"
               >
-                <font-awesome-icon icon="trash" />
-              </button>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600"
+                    >Yield (%)</label
+                  >
+                  <input
+                    v-model.number="item.yield"
+                    type="number"
+                    class="mt-1 w-24 rounded-md border p-1"
+                  />
+                </div>
+                <div class="flex items-center pt-5">
+                  <input
+                    :id="`costByWholeUnit-${index}`"
+                    v-model="item.costByWholeUnit"
+                    type="checkbox"
+                    class="h-4 w-4 rounded border-gray-300 text-primary"
+                  />
+                  <label
+                    :for="`costByWholeUnit-${index}`"
+                    class="ml-2 text-sm text-gray-700"
+                  >
+                    คิดต้นทุนเต็มหน่วย
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
           <button

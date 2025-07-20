@@ -61,7 +61,8 @@ library.add(
   faTools,
   faChevronDown,
   faChevronUp,
-  faChartLine
+  faChartLine,
+  faChevronDown
 );
 
 const app = createApp(App);
