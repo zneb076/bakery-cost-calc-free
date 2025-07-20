@@ -127,6 +127,22 @@ function removeIngredientRow(index) {
   recipe.value.ingredientsList.splice(index, 1);
 }
 
+const isIngredientUnitBased = computed(() => {
+  if (!recipe.value || !recipe.value.ingredientsList) return {};
+  const results = {};
+  recipe.value.ingredientsList.forEach((item, index) => {
+    const selected = props.availableIngredients.find(
+      (i) => (i.isSubRecipe ? `${i.name} (สูตรย่อย)` : i.name) === item.name
+    );
+    // ถ้าหน่วยเป็น "กรัม" หรือเป็น "สูตรย่อย" จะให้เป็น false
+    results[index] =
+      selected &&
+      !selected.isSubRecipe &&
+      selected.purchaseUnit.trim().toLowerCase() !== 'กรัม';
+  });
+  return results;
+});
+
 function handleSubmit() {
   if (!recipe.value.name) {
     Swal.fire({
@@ -214,7 +230,20 @@ function handleSubmit() {
           ></textarea>
         </div>
         <div class="border-t pt-6">
-          <h4 class="mb-4 text-lg font-medium">รายการวัตถุดิบ</h4>
+          <h4 class="text-lg font-medium">รายการวัตถุดิบ</h4>
+          <div
+            class="mx-2 mb-4 mt-2 flex items-center space-x-4 text-xs text-gray-500"
+          >
+            <div class="flex items-center space-x-1">
+              <span class="h-2.5 w-2.5 rounded-full bg-gray-400"></span>
+              <span>ต้นทุนปกติ</span>
+            </div>
+            <div class="flex items-center space-x-1">
+              <span class="h-2.5 w-2.5 rounded-full bg-green-500"></span>
+              <span>มีการคิดต้นทุนเพิ่มเติม</span>
+            </div>
+          </div>
+
           <div class="space-y-1">
             <div
               v-for="(item, index) in recipe.ingredientsList"
@@ -225,7 +254,7 @@ function handleSubmit() {
                 <span
                   @click="item.showAdvanced = !item.showAdvanced"
                   title="ตั้งค่าเพิ่มเติม"
-                  class="h-3 w-3 flex-shrink-0 cursor-pointer rounded-full transition-colors"
+                  class="mr-2 h-2.5 w-2.5 flex-shrink-0 cursor-pointer rounded-full transition-colors"
                   :class="{
                     'bg-green-500 hover:bg-green-600':
                       item.yield < 100 || item.costByWholeUnit,
@@ -288,12 +317,18 @@ function handleSubmit() {
                   <input
                     :id="`costByWholeUnit-${index}`"
                     v-model="item.costByWholeUnit"
+                    :disabled="!isIngredientUnitBased[index]"
                     type="checkbox"
-                    class="h-4 w-4 rounded border-gray-300 text-primary"
+                    class="h-4 w-4 rounded border-gray-300 text-primary disabled:bg-gray-200"
                   />
                   <label
                     :for="`costByWholeUnit-${index}`"
-                    class="ml-2 text-sm text-gray-700"
+                    class="ml-2 text-sm"
+                    :class="
+                      isIngredientUnitBased[index]
+                        ? 'text-gray-700'
+                        : 'text-gray-400'
+                    "
                   >
                     คิดต้นทุนเต็มหน่วย
                   </label>

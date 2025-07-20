@@ -34,6 +34,13 @@ const isUnitNotGrams = computed(() => {
   );
 });
 
+const shouldDisableCostByUnit = computed(() => {
+  return (
+    !formData.value.purchaseUnit ||
+    formData.value.purchaseUnit.trim().toLowerCase() === 'กรัม'
+  );
+});
+
 watch(
   () => props.initialData,
   (newData) => {
@@ -199,12 +206,16 @@ function handleSubmit() {
               <input
                 id="costByWholeUnit"
                 v-model="formData.costByWholeUnit"
+                :disabled="shouldDisableCostByUnit"
                 type="checkbox"
-                class="h-4 w-4 rounded border-gray-300 text-primary"
+                class="h-4 w-4 rounded border-gray-300 text-primary disabled:bg-gray-200"
               />
               <label
                 for="costByWholeUnit"
-                class="ml-2 block text-sm text-secondary"
+                class="ml-2 block text-sm"
+                :class="
+                  shouldDisableCostByUnit ? 'text-gray-400' : 'text-gray-900'
+                "
               >
                 2. คิดต้นทุนเต็มหน่วยเสมอ
               </label>
