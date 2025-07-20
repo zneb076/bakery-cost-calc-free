@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { db } from '../services/db.js';
+import { useRoute } from 'vue-router';
 import Multiselect from '@vueform/multiselect';
 import Swal from 'sweetalert2';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -8,7 +9,7 @@ import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import BaseModal from '../components/BaseModal.vue';
 
 const resultsSection = ref(null);
-
+const route = useRoute();
 const finalRecipes = ref([]);
 const allIngredients = ref([]);
 const allSubRecipes = ref([]);
@@ -47,9 +48,13 @@ async function fetchData() {
 
 onMounted(async () => {
   // โหลดค่าเริ่มต้นจากฐานข้อมูล
+  await fetchData();
   const savedSettings = await db.settings.toArray();
   const settingsMap = new Map(savedSettings.map((s) => [s.key, s.value]));
-
+  if (route.query.recipeId) {
+    // แปลงเป็นตัวเลขและตั้งค่า selectedRecipeId
+    selectedRecipeId.value = Number(route.query.recipeId);
+  }
   laborCostPerHour.value = settingsMap.get('laborCostPerHour') || 50;
   workHours.value = settingsMap.get('workHours') || 4;
   overheadPercent.value = settingsMap.get('overheadPercent') || 30;

@@ -189,6 +189,13 @@ onMounted(fetchData);
                   >
                     <font-awesome-icon icon="eye" />
                   </button>
+                  <router-link
+                    :to="{ name: 'Calculator', query: { recipeId: recipe.id } }"
+                    class="text-gray-500 transition-colors hover:text-yellow-600"
+                    title="คำนวณต้นทุนสูตรนี้"
+                  >
+                    <font-awesome-icon icon="calculator" size="lg" />
+                  </router-link>
                   <button
                     @click="openEditModal(recipe)"
                     class="text-gray-500 transition-colors hover:text-secondary"
