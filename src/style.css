@@ -12,6 +12,17 @@
   font-family: 'Mali', sans-serif;
 }
 
+/* เพิ่มโค้ดนี้เพื่อซ่อนลูกศรในช่อง input type="number" */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
 /* เพิ่มกฎสำหรับปรับขนาดแท็กต่างๆ เฉพาะเมื่อใช้ฟอนต์ Mali
 */
 @layer base {

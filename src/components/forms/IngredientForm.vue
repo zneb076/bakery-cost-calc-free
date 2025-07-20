@@ -1,7 +1,7 @@
 <script setup>
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick, onMounted } from 'vue';
 import Swal from 'sweetalert2';
-import Multiselect from '@vueform/multiselect';
+import CustomAutocomplete from '../CustomAutocomplete.vue';
 
 const props = defineProps({
   initialData: {
@@ -29,14 +29,48 @@ const isUnitGrams = computed(
   () => formData.value.purchaseUnit.trim().toLowerCase() === 'กรัม'
 );
 
+const isEditing = computed(() => !!props.initialData.id);
+const multiselectRef = ref(null);
+const priceInputRef = ref(null);
+
+const searchText = ref('');
+const autocompleteRef = ref(null);
+
+onMounted(() => {
+  autocompleteRef.value?.focus();
+});
+
 watch(
   () => props.initialData,
   (newData) => {
     formData.value = { ...newData };
-  }
+  },
+  { immediate: true, deep: true }
 );
 
-const isEditing = computed(() => !!props.initialData.id);
+function moveToNextInput() {
+  // ใช้ nextTick เพื่อรอให้ค่า update เสร็จก่อนย้าย focus
+  nextTick(() => {
+    priceInputRef.value?.focus();
+  });
+}
+// ฟังก์ชันสำหรับจัดการเมื่อมีการสร้าง tag ใหม่
+function handleTag(newTagName) {
+  formData.value.name = newTagName;
+  moveToNextInput();
+}
+
+function handleSelect(selectedName) {
+  searchText.value = selectedName;
+  formData.value.name = selectedName;
+  priceInputRef.value?.focus();
+}
+
+// อัปเดตค่าเมื่อพิมพ์
+function handleSearchChange(query) {
+  searchText.value = query;
+  formData.value.name = query;
+}
 
 function handleSubmit() {
   const { name, purchaseUnit, purchaseQuantity, purchasePrice } =
@@ -83,15 +117,14 @@ function handleSubmit() {
           <label for="name" class="block text-sm font-medium"
             >ชื่อวัตถุดิบ</label
           >
-          <Multiselect
+          <CustomAutocomplete
             v-model="formData.name"
             :options="existingNames"
-            :searchable="true"
-            :create-option="true"
             :disabled="isEditing"
-            placeholder="ค้นหาหรือพิมพ์เพื่อเพิ่มใหม่"
+            :creatable="true"
+            @selection-made="moveToNextInput"
             class="mt-1"
-          />
+          ></CustomAutocomplete>
           <p v-if="isEditing" class="mt-1 text-xs text-gray-500">
             ไม่สามารถแก้ไขชื่อวัตถุดิบได้
           </p>
@@ -103,10 +136,11 @@ function handleSubmit() {
               >ราคาที่ซื้อ (บาท)</label
             >
             <input
+              ref="priceInputRef"
               v-model.number="formData.purchasePrice"
               type="number"
               step="0.01"
-              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+              class="mt-1 w-full rounded-md border p-2"
             />
           </div>
           <div>
