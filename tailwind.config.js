@@ -15,6 +15,13 @@ export default {
         secondary: '#0084C5',
       },
     },
+    screens: {
+      sm: '640px',
+      md: '768px',
+      lg: '1024px', // <-- จุดเปลี่ยนไปเป็น Desktop
+      xl: '1280px',
+      '2xl': '1536px',
+    },
   },
   plugins: [],
 };

@@ -124,10 +124,10 @@ function migrateData(backupObject) {
     <div class="flex flex-col gap-8 md:flex-row">
       <main class="flex-grow">
         <div class="rounded-lg bg-white p-6 shadow-md">
-          <h2 class="mb-4 text-2xl font-semibold">สำรองและกู้คืนข้อมูล</h2>
+          <h2 class="mb-4 text-2xl font-semibold">สำรองและนำเข้าข้อมูล</h2>
           <div class="space-y-4">
             <div>
-              <h3 class="font-semibold">ส่งออกข้อมูล (Backup)</h3>
+              <h3 class="font-semibold">สำรองข้อมูล (Backup)</h3>
               <p class="mb-2 text-sm text-gray-500">
                 บันทึกข้อมูลวัตถุดิบและสูตรทั้งหมดของคุณเป็นไฟล์ `.json`
               </p>
@@ -135,7 +135,7 @@ function migrateData(backupObject) {
                 @click="exportData"
                 class="rounded-lg bg-secondary px-4 py-2 font-bold text-white"
               >
-                ส่งออกข้อมูล
+                สำรองข้อมูล
               </button>
             </div>
             <hr />

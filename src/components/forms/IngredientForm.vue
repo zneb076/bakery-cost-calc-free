@@ -52,10 +52,6 @@ watch(
   { immediate: true, deep: true }
 );
 
-onMounted(() => {
-  autocompleteRef.value?.focus();
-});
-
 function focusNext(nextElementId) {
   nextTick(() => {
     document.getElementById(nextElementId)?.focus();
