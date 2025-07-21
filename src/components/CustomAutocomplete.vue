@@ -1,10 +1,12 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
   modelValue: [String, Number],
   options: { type: Array, default: () => [] },
   creatable: { type: Boolean, default: false },
+  placeholder: { type: String, default: 'ค้นหาหรือเลือก' },
+  showAllOnFocus: { type: Boolean, default: true },
 });
 const emit = defineEmits(['update:modelValue', 'selection-made']);
 
@@ -13,23 +15,31 @@ const showOptions = ref(false);
 const inputRef = ref(null);
 const activeIndex = ref(-1);
 
+// **ส่วนที่แก้ไข:** เพิ่ม watch เพื่อให้ state ภายในตรงกับภายนอกเสมอ
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    searchQuery.value = newValue;
+  }
+);
+
 const filteredOptions = computed(() => {
   activeIndex.value = -1;
-  if (!searchQuery.value) return [];
+  if (!searchQuery.value) {
+    return props.showAllOnFocus ? props.options : [];
+  }
   return props.options.filter((opt) =>
     opt.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
 
 function selectOption(option) {
-  searchQuery.value = option;
   emit('update:modelValue', option);
   showOptions.value = false;
   emit('selection-made');
 }
 
 function handleInput(event) {
-  searchQuery.value = event.target.value;
   emit('update:modelValue', event.target.value);
   showOptions.value = true;
 }
@@ -38,10 +48,9 @@ function handleBlur() {
   setTimeout(() => {
     if (
       !props.creatable &&
-      searchQuery.value &&
-      !props.options.includes(searchQuery.value)
+      props.modelValue &&
+      !props.options.includes(props.modelValue)
     ) {
-      searchQuery.value = '';
       emit('update:modelValue', '');
     }
     showOptions.value = false;
@@ -50,7 +59,6 @@ function handleBlur() {
 
 function handleKeydown(event) {
   const optionsLength = filteredOptions.value.length;
-
   switch (event.key) {
     case 'ArrowDown':
       if (!optionsLength) return;
@@ -65,10 +73,16 @@ function handleKeydown(event) {
       break;
     case 'Enter':
       event.preventDefault();
-      if (activeIndex.value !== -1 && filteredOptions.value.length > 0) {
+      if (activeIndex.value !== -1 && optionsLength > 0) {
         selectOption(filteredOptions.value[activeIndex.value]);
       } else {
-        // **ส่วนที่แก้ไข:** ไม่ว่าจะมีค่าหรือไม่ ให้ emit event เสมอ
+        if (
+          !props.creatable &&
+          props.modelValue &&
+          !props.options.includes(props.modelValue)
+        ) {
+          emit('update:modelValue', '');
+        }
         showOptions.value = false;
         emit('selection-made');
       }
@@ -91,11 +105,11 @@ defineExpose({ focus });
       ref="inputRef"
       type="text"
       :value="modelValue"
+      :placeholder="placeholder"
       @input="handleInput"
       @focus="showOptions = true"
       @blur="handleBlur"
       @keydown="handleKeydown"
-      placeholder="วัตถุดิบ"
       class="w-full rounded-md border border-gray-300 px-3 py-2"
     />
     <ul

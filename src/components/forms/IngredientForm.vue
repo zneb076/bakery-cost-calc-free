@@ -25,9 +25,6 @@ const emit = defineEmits(['save', 'cancel']);
 
 const formData = ref({});
 const autocompleteRef = ref(null);
-const priceInputRef = ref(null);
-const quantityInputRef = ref(null);
-const unitInputRef = ref(null);
 const isEditing = computed(() => !!props.initialData.id);
 
 const isUnitNotGrams = computed(() => {
@@ -51,9 +48,6 @@ watch(
     if (formData.value.defaultYield == null) {
       formData.value.defaultYield = 100;
     }
-    if (formData.value.costByWholeUnit == null) {
-      formData.value.costByWholeUnit = false;
-    }
   },
   { immediate: true, deep: true }
 );
@@ -62,9 +56,9 @@ onMounted(() => {
   autocompleteRef.value?.focus();
 });
 
-function moveTo(targetRef) {
+function focusNext(nextElementId) {
   nextTick(() => {
-    targetRef.value?.focus();
+    document.getElementById(nextElementId)?.focus();
   });
 }
 
@@ -128,6 +122,8 @@ function handleSubmit() {
             :options="existingNames"
             :disabled="isEditing"
             :creatable="true"
+            :show-all-on-focus="false"
+            placeholder="พิมพ์เพื่อค้นหาหรือเพิ่มใหม่"
             @selection-made="focusNext('price-input')"
             class="mt-1"
           ></CustomAutocomplete>
@@ -184,14 +180,13 @@ function handleSubmit() {
           <h4 class="mb-2 font-semibold text-gray-800">
             การตั้งค่าต้นทุน (ทางเลือก)
           </h4>
-          <p class="mb-4 text-sm text-gray-500">
-            2 ส่วนนี้เป็นค่าที่ตั้งไว้ล่วงหน้าเพื่อการคำนวณที่แม่นยำขึ้น
-            หากไม่ต้องการใช้งาน สามารถเลื่อนลงไปบันทึกได้เลย
+          <p class="mb-4 text-xs text-gray-500">
+            ส่วนนี้เป็นค่าที่ตั้งไว้ล่วงหน้าเพื่อการคำนวณที่แม่นยำขึ้น
+            หากไม่ต้องการใช้งาน สามารถข้ามไปได้เลย
           </p>
-
           <div>
-            <label class="block text-sm font-medium text-secondary"
-              >1. Yield เริ่มต้น (%)</label
+            <label class="block text-sm font-medium text-gray-700"
+              >Yield เริ่มต้น (%)</label
             >
             <input
               v-model.number="formData.defaultYield"
@@ -200,12 +195,7 @@ function handleSubmit() {
               max="100"
               class="mt-1 w-full rounded-md border p-2"
             />
-            <p class="mt-1 text-xs text-gray-600">
-              เปอร์เซ็นต์ส่วนที่ใช้ได้หลังการเตรียม (เช่น ปอกเปลือกแล้วเหลือ
-              80%)
-            </p>
           </div>
-
           <div class="mt-4">
             <div class="flex items-center">
               <input
@@ -222,13 +212,9 @@ function handleSubmit() {
                   shouldDisableCostByUnit ? 'text-gray-400' : 'text-gray-900'
                 "
               >
-                2. คิดต้นทุนเต็มหน่วยเสมอ
+                คิดต้นทุนเต็มหน่วยเสมอ
               </label>
             </div>
-            <p class="ml-6 mt-1 text-xs text-gray-600">
-              (สำหรับวัตถุดิบที่ต้องใช้ทั้งหน่วย เช่น ไข่ไก่ ตอกใช้แค่ส่วนหนึ่ง
-              ที่เหลือต้องทิ้ง จะคิดทุนทั้งฟอง)
-            </p>
           </div>
         </div>
       </div>
