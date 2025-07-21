@@ -34,7 +34,9 @@ const emit = defineEmits(['toggle-font']);
 
 <template>
   <div>
-    <nav class="sticky top-0 z-40 bg-primary text-white shadow-md lg:ml-64">
+    <nav
+      class="sticky top-0 z-40 bg-primary text-white shadow-md lg:ml-[300px]"
+    >
       <div
         class="container mx-auto flex h-16 items-center justify-between px-4"
       >

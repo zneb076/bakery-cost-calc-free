@@ -16,7 +16,7 @@ onMounted(async () => {
   <div class="min-h-screen bg-gray-100 text-gray-800">
     <Navbar @toggle-font="toggleFont" />
 
-    <main class="lg:ml-64">
+    <main class="lg:ml-[300px]">
       <div class="container mx-auto p-2 md:p-6">
         <router-view />
       </div>
