@@ -615,7 +615,9 @@ const recipeOptions = computed(() => {
       <div class="mb-8 mt-5 rounded-lg bg-white p-4 shadow-md">
         <div>
           <h3 class="mb-4 text-xl font-semibold">สรุปต้นทุนและกำหนดราคาขาย</h3>
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div
+            class="grid grid-cols-1 gap-6 md:grid-cols-1 md:px-36 lg:grid-cols-1 lg:px-48"
+          >
             <div>
               <span class="text-xl font-bold text-primary"
                 >ตั้งราคาขายต่อชิ้น

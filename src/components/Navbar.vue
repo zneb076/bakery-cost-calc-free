@@ -23,8 +23,8 @@ const menuItems = [
     text: 'ตั้งค่า',
     icon: 'cog',
     children: [
-      { text: 'จัดการฐานข้อมูล', name: 'SettingsData', icon: 'database' },
       { text: 'ตั้งค่าทั่วไป', name: 'SettingsGeneral', icon: 'tools' },
+      { text: 'จัดการฐานข้อมูล', name: 'SettingsData', icon: 'database' },
     ],
   },
 ];
