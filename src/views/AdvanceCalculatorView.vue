@@ -1,20 +1,20 @@
 <template>
   <div>
-    <h1 class="mb-6 p-4 text-3xl font-bold">คำนวณต้นทุน (Advance)</h1>
+    <h1 class="mb-6 p-4 text-2xl font-bold">คำนวณต้นทุน (Advance)</h1>
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       <router-link
         :to="{ name: 'CalculatorOverhead' }"
         class="block rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
       >
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-4 py-6">
           <font-awesome-icon
             icon="calculator"
             class="text-3xl text-secondary"
           />
           <div>
             <h2 class="text-xl font-semibold">คำนวณต้นทุนแฝง</h2>
-            <p class="text-sm text-gray-500">
+            <p class="mt-2 text-sm text-gray-500">
               หาต้นทุนแฝงต่อชิ้นจากยอดขายและต้นทุนคงที่
             </p>
           </div>
@@ -25,11 +25,11 @@
         :to="{ name: 'CalculatorBreakEven' }"
         class="block rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
       >
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-4 py-6">
           <font-awesome-icon icon="chart-pie" class="text-3xl text-secondary" />
           <div>
             <h2 class="text-xl font-semibold">หาจุดคุ้มทุน</h2>
-            <p class="text-sm text-gray-500">
+            <p class="mt-2 text-sm text-gray-500">
               คำนวณว่าต้องขายเท่าไหร่ถึงจะเริ่มมีกำไร
             </p>
           </div>

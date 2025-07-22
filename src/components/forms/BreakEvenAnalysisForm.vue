@@ -56,9 +56,7 @@ function handleSubmit() {
 <template>
   <form @submit.prevent="handleSubmit">
     <div class="p-6">
-      <h3 class="mb-4 text-2xl font-semibold">
-        {{ group.id ? 'แก้ไขกลุ่ม' : 'สร้างกลุ่มสำหรับหาจุดคุ้มทุน' }}
-      </h3>
+      <h3 class="mb-4 text-2xl font-semibold">กลุ่มสำหรับหาจุดคุ้มทุน</h3>
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium">ชื่อกลุ่ม</label>
@@ -76,34 +74,45 @@ function handleSubmit() {
               :key="index"
               class="rounded-lg bg-gray-50 p-3"
             >
-              <div class="flex items-center space-x-2">
-                <Multiselect
-                  v-model="item.productId"
-                  :options="productOptions"
-                  placeholder="เลือกสินค้า"
-                  class="flex-grow"
-                />
+              <label class="block text-xs font-medium text-gray-600"
+                >สินค้า #{{ index + 1 }}</label
+              >
+              <Multiselect
+                v-model="item.productId"
+                :options="productOptions"
+                placeholder="เลือกสินค้า"
+                class="mt-1 flex-grow"
+              />
+              <div class="mt-2 flex items-center space-x-2">
+                <div>
+                  <label class="block text-xs font-medium text-gray-600"
+                    >สัดส่วนการขาย (%)</label
+                  >
+                  <input
+                    v-model.number="item.salesMix"
+                    type="number"
+                    placeholder="สัดส่วน"
+                    class="mt-1 w-36 flex-grow rounded-md border p-2"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600"
+                    >ราคาขาย (บาท)</label
+                  >
+                  <input
+                    v-model.number="item.price"
+                    type="number"
+                    placeholder="ราคาขาย"
+                    class="mt-1 w-36 flex-grow rounded-md border p-2"
+                  />
+                </div>
                 <button
                   @click="removeRow(index)"
                   type="button"
-                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center text-red-500"
+                  class="mb-2 self-end text-red-500"
                 >
                   <font-awesome-icon icon="trash" />
                 </button>
-              </div>
-              <div class="mt-2 flex items-center space-x-2">
-                <input
-                  v-model.number="item.salesMix"
-                  type="number"
-                  placeholder="สัดส่วนการขาย (%)"
-                  class="w-24 flex-grow rounded-md border p-2"
-                />
-                <input
-                  v-model.number="item.price"
-                  type="number"
-                  placeholder="ราคาขาย (บาท)"
-                  class="w-24 flex-grow rounded-md border p-2"
-                />
               </div>
             </div>
           </div>

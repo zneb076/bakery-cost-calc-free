@@ -250,13 +250,15 @@ function getProductName(productId) {
 
 <template>
   <div>
-    <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุนแฝงต่อชิ้น</h1>
+    <h1 class="mb-6 text-2xl font-bold">คำนวณต้นทุนแฝงต่อชิ้น</h1>
     <div class="rounded-lg bg-white p-4 shadow-md">
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-semibold">กลุ่มสินค้าสำหรับหาต้นทุนแฝง</h2>
+        <h2 class="text-xl font-semibold">กลุ่มสินค้าสำหรับหาต้นทุนแฝง</h2>
+      </div>
+      <div class="text-right">
         <button
           @click="openAddModal"
-          class="rounded-lg bg-primary px-4 py-2 font-bold text-white"
+          class="mb-3 rounded-lg bg-primary px-4 py-2 text-sm text-white"
         >
           + สร้างกลุ่มใหม่
         </button>
@@ -281,10 +283,10 @@ function getProductName(productId) {
             <td class="space-x-2 py-2 text-right">
               <button
                 @click="calculateOverhead(group)"
-                class="rounded bg-green-500 px-3 py-1 text-white"
+                class="rounded bg-green-500 px-3 py-1 text-xs text-white"
               >
-                เลือกใช้
-              </button>
+                คำนวน</button
+              ><br />
               <button
                 @click="openEditModal(group)"
                 class="text-gray-500 hover:text-secondary"
@@ -301,7 +303,9 @@ function getProductName(productId) {
           </tr>
         </tbody>
       </table>
-      <div class="border-t pt-4">
+    </div>
+    <div class="mt-4 rounded-lg bg-green-50 p-4 shadow-md">
+      <div>
         <label class="block text-sm font-medium"
           >ต้นทุนคงที่ทั้งหมด/เดือน (บาท)</label
         >

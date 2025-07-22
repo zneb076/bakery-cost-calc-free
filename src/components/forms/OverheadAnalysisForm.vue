@@ -55,7 +55,7 @@ function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <div class="p-6">
+    <div class="p-3">
       <h3 class="mb-4 text-2xl font-semibold">กลุ่มสำหรับหาต้นทุนแฝง</h3>
       <div class="space-y-4">
         <div>
@@ -72,27 +72,40 @@ function handleSubmit() {
             <div
               v-for="(item, index) in group.products"
               :key="index"
-              class="flex items-center space-x-2"
+              class="rounded-lg bg-gray-50"
             >
-              <Multiselect
-                v-model="item.productId"
-                :options="productOptions"
-                placeholder="เลือกสินค้า"
-                class="flex-grow"
-              />
-              <input
-                v-model.number="item.monthlySales"
-                type="number"
-                placeholder="ยอดขาย/เดือน (ชิ้น)"
-                class="w-40 rounded-md border p-2"
-              />
-              <button
-                @click="removeRow(index)"
-                type="button"
-                class="text-red-500"
-              >
-                <font-awesome-icon icon="trash" />
-              </button>
+              <div class="flex items-center space-x-2">
+                <div class="w-48">
+                  <label class="block text-xs font-medium text-gray-600"
+                    >สินค้า #{{ index + 1 }}</label
+                  >
+                  <Multiselect
+                    v-model="item.productId"
+                    :options="productOptions"
+                    placeholder="เลือกสินค้า"
+                    class="mt-1 flex-grow"
+                  />
+                </div>
+                <div class="w-36">
+                  <label
+                    class="block text-center text-xs font-medium text-gray-600"
+                    >ยอดขาย (ชิ้น)/เดือน</label
+                  >
+                  <input
+                    v-model.number="item.monthlySales"
+                    type="number"
+                    placeholder="ชิ้น"
+                    class="mt-1 w-full rounded-md border p-2"
+                  />
+                </div>
+                <button
+                  @click="removeRow(index)"
+                  type="button"
+                  class="mb-2 w-[30px] self-end text-red-500"
+                >
+                  <font-awesome-icon icon="trash" />
+                </button>
+              </div>
             </div>
           </div>
           <button

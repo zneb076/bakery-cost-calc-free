@@ -36,7 +36,7 @@ const emit = defineEmits(['toggle-font']);
 <template>
   <div>
     <nav
-      class="sticky top-0 z-40 bg-primary text-white shadow-md lg:ml-[300px]"
+      class="sticky top-0 z-40 bg-primary text-white shadow-md lg:ml-[310px]"
     >
       <div
         class="container mx-auto flex h-16 items-center justify-between px-4"
@@ -66,7 +66,7 @@ const emit = defineEmits(['toggle-font']);
 
     <aside
       :class="[
-        'fixed top-0 z-50 flex h-full w-[300px] flex-col bg-[#1F2937] text-white shadow-lg',
+        'fixed top-0 z-50 flex h-full w-[310px] flex-col bg-[#1F2937] text-white shadow-lg',
         'transform transition-transform duration-300 ease-in-out',
         // --- ส่วนที่แก้ไขใหม่ทั้งหมด ---
         // Desktop: อยู่ด้านซ้ายและแสดงเสมอ

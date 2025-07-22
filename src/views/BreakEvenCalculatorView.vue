@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { db } from '../services/db.js';
+import Multiselect from '@vueform/multiselect';
 import Swal from 'sweetalert2';
 import BaseModal from '../components/BaseModal.vue';
 import BreakEvenAnalysisForm from '../components/forms/BreakEvenAnalysisForm.vue';
@@ -13,12 +14,11 @@ const allRecipes = ref([]);
 const allIngredients = ref([]);
 const allSubRecipes = ref([]);
 const fixedCosts = ref(10000);
-
 const calculationResult = ref(null);
 const isGroupModalOpen = ref(false);
 const editingGroup = ref(null);
 const isStepsModalOpen = ref(false);
-
+const expandedProjectionIndex = ref(null);
 const resultsSection = ref(null);
 
 async function fetchData() {
@@ -39,7 +39,7 @@ onMounted(fetchData);
 function openAddModal() {
   editingGroup.value = {
     name: '',
-    products: [{ productId: null, salesMix: null }],
+    products: [{ productId: null, salesMix: null, price: null }],
   };
   isGroupModalOpen.value = true;
 }
@@ -59,21 +59,34 @@ async function handleSave(groupData) {
     ...JSON.parse(JSON.stringify(groupData)),
     groupType: GROUP_TYPE,
   };
-  if (plainData.id) {
-    await db.analysisGroups.update(plainData.id, plainData);
-  } else {
-    await db.analysisGroups.add(plainData);
+  try {
+    if (plainData.id) {
+      await db.analysisGroups.update(plainData.id, plainData);
+    } else {
+      await db.analysisGroups.add(plainData);
+    }
+    closeModal();
+    await fetchData();
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'บันทึกกลุ่มสำเร็จ',
+      showConfirmButton: false,
+      timer: 1000,
+    });
+  } catch (error) {
+    if (error.name === 'ConstraintError') {
+      Swal.fire(
+        'เกิดข้อผิดพลาด',
+        'มีกลุ่มวิเคราะห์ชื่อนี้อยู่แล้ว กรุณาใช้ชื่ออื่น',
+        'error'
+      );
+    } else {
+      Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+      console.error('Save failed:', error);
+    }
   }
-  closeModal();
-  await fetchData();
-  Swal.fire({
-    toast: true,
-    position: 'top-end',
-    icon: 'success',
-    title: 'บันทึกกลุ่มสำเร็จ',
-    showConfirmButton: false,
-    timer: 3000,
-  });
 }
 
 async function deleteGroup(id, name) {
@@ -100,6 +113,7 @@ async function deleteGroup(id, name) {
 }
 
 async function calculateBreakEven(group) {
+  expandedProjectionIndex.value = null;
   calculationResult.value = null;
   if (!group) return;
 
@@ -114,20 +128,15 @@ async function calculateBreakEven(group) {
       const recipe = allRecipes.value.find(
         (r) => r.id === productInfo?.recipeId
       );
-      if (!recipe || !productInfo) continue;
+      if (!recipe || !productInfo || !product.price || !product.salesMix)
+        continue;
 
-      const totalRecipeWeight =
-        recipe.ingredientsList.reduce(
-          (sum, item) => sum + Number(item.quantity || 0),
-          0
-        ) || 1;
       const flatIngredients = await expandRecipe(recipe, 1);
-      const variableCostPerGram =
-        flatIngredients.reduce((sum, ing) => sum + ing.totalCost, 0) /
-        totalRecipeWeight;
-      const variableCost = variableCostPerGram * Number(productInfo.weight);
-
-      const sellingPrice = Number(productInfo.price);
+      const variableCost = flatIngredients.reduce(
+        (sum, ing) => sum + ing.totalCost,
+        0
+      );
+      const sellingPrice = Number(product.price);
       const contributionMargin = sellingPrice - variableCost;
       const mixRatio = Number(product.salesMix);
 
@@ -152,35 +161,38 @@ async function calculateBreakEven(group) {
     }
 
     const weightedAverageCm = totalWeightedCm / totalMixRatio;
+    const weightedAveragePrice =
+      productDetails.reduce((sum, p) => sum + p.sellingPrice * p.salesMix, 0) /
+      totalMixRatio;
     const breakEvenPointTotalUnits =
       Number(fixedCosts.value || 0) / weightedAverageCm;
+    const breakEvenPointRevenue =
+      breakEvenPointTotalUnits * weightedAveragePrice;
 
-    let breakEvenPointRevenue = 0;
     const breakEvenUnitsByProduct = productDetails.map((p) => {
       const units = breakEvenPointTotalUnits * (p.salesMix / totalMixRatio);
-      breakEvenPointRevenue += units * p.sellingPrice;
       return { name: p.name, units: Math.ceil(units) };
     });
 
     const projections = [];
-    const baseRevenue =
-      breakEvenPointRevenue > 0 ? breakEvenPointRevenue : 10000;
-    for (let i = 1; i <= 5; i++) {
-      const projectedRevenue = baseRevenue + baseRevenue * 0.1 * i;
-      const projectedUnits =
-        breakEvenPointRevenue > 0
-          ? breakEvenPointTotalUnits *
-            (projectedRevenue / breakEvenPointRevenue)
-          : 0;
+    const baseUnits = Math.ceil(breakEvenPointTotalUnits);
+    for (let i = 0; i <= 5; i++) {
+      const projectedUnits = baseUnits + 50 * i;
+      const projectedRevenue = projectedUnits * weightedAveragePrice;
       const projectedProfit =
         projectedUnits * weightedAverageCm - Number(fixedCosts.value || 0);
-      projections.push({ revenue: projectedRevenue, profit: projectedProfit });
+      projections.push({
+        units: projectedUnits,
+        revenue: projectedRevenue,
+        profit: projectedProfit,
+      });
     }
 
     calculationResult.value = {
       groupName: group.name,
       productDetails,
       weightedAverageCm,
+      totalMixRatio,
       breakEvenPointUnits: Math.ceil(breakEvenPointTotalUnits),
       breakEvenPointRevenue,
       breakEvenUnitsByProduct,
@@ -265,12 +277,35 @@ async function expandRecipe(recipe, scalingFactor) {
 function getProductName(productId) {
   return allProducts.value.find((p) => p.id === productId)?.name || 'N/A';
 }
+
+function toggleProjectionDetails(index) {
+  if (expandedProjectionIndex.value === index) {
+    expandedProjectionIndex.value = null;
+  } else {
+    expandedProjectionIndex.value = index;
+  }
+}
+
+const projectionDetails = computed(() => {
+  if (expandedProjectionIndex.value === null || !calculationResult.value)
+    return [];
+
+  const projection =
+    calculationResult.value.projections[expandedProjectionIndex.value];
+  if (!projection) return [];
+
+  return calculationResult.value.productDetails.map((p) => {
+    const units =
+      projection.units * (p.salesMix / calculationResult.value.totalMixRatio);
+    return { name: p.name, units: Math.ceil(units) };
+  });
+});
 </script>
 
 <template>
   <div>
     <h1 class="mb-6 text-3xl font-bold">คำนวณหาจุดคุ้มทุน</h1>
-    <div class="rounded-lg bg-white p-6 shadow-md">
+    <div class="rounded-lg bg-white p-4 shadow-md">
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-semibold">กลุ่มสินค้าสำหรับหาจุดคุ้มทุน</h2>
       </div>
@@ -302,9 +337,9 @@ function getProductName(productId) {
             <td class="w-24 space-x-2 py-2 text-right">
               <button
                 @click="calculateBreakEven(group)"
-                class="rounded bg-green-500 px-3 py-1 text-sm text-white"
+                class="rounded bg-green-500 px-3 py-1 text-xs text-white"
               >
-                เลือกใช้
+                คำนวน
               </button>
               <br />
               <button
@@ -323,7 +358,9 @@ function getProductName(productId) {
           </tr>
         </tbody>
       </table>
-      <div class="border-t pt-4">
+    </div>
+    <div class="mt-4 rounded-lg bg-green-50 p-4 shadow-md">
+      <div>
         <label class="block text-sm font-medium"
           >ต้นทุนคงที่ทั้งหมด/เดือน (บาท)</label
         >
@@ -374,13 +411,13 @@ function getProductName(productId) {
               class="border-b"
             >
               <td class="px-3 py-2">{{ p.name }}</td>
-              <td class="px-3 py-2 text-right font-mono">
+              <td class="px-3 py-2 text-right">
                 {{ p.sellingPrice.toFixed(2) }}
               </td>
-              <td class="px-3 py-2 text-right font-mono text-red-500">
+              <td class="px-3 py-2 text-right text-red-500">
                 {{ p.variableCost.toFixed(2) }}
               </td>
-              <td class="px-3 py-2 text-right font-mono text-green-600">
+              <td class="px-3 py-2 text-right text-green-600">
                 {{ p.contributionMargin.toFixed(2) }}
               </td>
             </tr>
@@ -424,16 +461,29 @@ function getProductName(productId) {
       <table class="min-w-full border">
         <thead class="bg-gray-100">
           <tr>
+            <th class="px-4 py-2 text-right"></th>
+            <th class="px-4 py-2 text-right">จำนวนขายรวม (ชิ้น)</th>
             <th class="px-4 py-2 text-right">ยอดขาย (บาท)</th>
             <th class="px-4 py-2 text-right">กำไร/ขาดทุน (บาท)</th>
           </tr>
         </thead>
-        <tbody>
+        <template
+          v-for="(proj, index) in calculationResult.projections"
+          :key="proj.units"
+        >
           <tr
-            v-for="proj in calculationResult.projections"
-            :key="proj.revenue"
-            class="border-b"
+            @click="toggleProjectionDetails(index)"
+            class="cursor-pointer border-b hover:bg-gray-100"
           >
+            <td>
+              <font-awesome-icon
+                icon="chevron-down"
+                class="h-3 w-3 pl-2 text-gray-400"
+              />
+            </td>
+            <td class="px-4 py-2 text-right">
+              {{ proj.units.toLocaleString() }}
+            </td>
             <td class="px-4 py-2 text-right">
               {{
                 proj.revenue.toLocaleString('en-US', {
@@ -454,7 +504,23 @@ function getProductName(productId) {
               }}
             </td>
           </tr>
-        </tbody>
+          <tr v-if="expandedProjectionIndex === index">
+            <td colspan="4" class="bg-gray-50 p-4">
+              <p class="mb-2 text-sm font-semibold">
+                รายละเอียดจำนวนขายโดยประมาณ:
+              </p>
+              <ul class="list-inside list-disc space-y-1 text-sm">
+                <li v-for="item in projectionDetails" :key="item.name">
+                  {{ item.name }}:
+                  <span class="font-bold">{{
+                    item.units.toLocaleString()
+                  }}</span>
+                  ชิ้น
+                </li>
+              </ul>
+            </td>
+          </tr>
+        </template>
       </table>
     </div>
 
@@ -499,7 +565,7 @@ function getProductName(productId) {
             </p>
             <p class="mt-1">
               คำนวณได้:
-              <span class="font-mono font-semibold">{{
+              <span class="font-semibold">{{
                 calculationResult.weightedAverageCm.toFixed(2)
               }}</span>
               บาท/หน่วย
@@ -510,7 +576,7 @@ function getProductName(productId) {
             <p class="mt-1">
               {{ Number(fixedCosts).toLocaleString() }} /
               {{ calculationResult.weightedAverageCm.toFixed(2) }} =
-              <span class="font-mono font-semibold">{{
+              <span class="font-semibold">{{
                 calculationResult.breakEvenPointUnits.toLocaleString()
               }}</span>
               หน่วย
@@ -520,7 +586,7 @@ function getProductName(productId) {
             <p class="font-semibold">4. สรุปยอดขาย ณ จุดคุ้มทุน</p>
             <p class="mt-1">
               รวมเป็นยอดขาย
-              <span class="font-mono font-semibold">{{
+              <span class="font-semibold">{{
                 calculationResult.breakEvenPointRevenue.toLocaleString(
                   'en-US',
                   { minimumFractionDigits: 2, maximumFractionDigits: 2 }

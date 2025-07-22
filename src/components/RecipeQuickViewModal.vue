@@ -81,12 +81,63 @@ async function saveAsImage() {
     isRendering.value = false;
   }
 }
+
+function calculateRecipeCost(recipe) {
+  if (!recipe?.ingredientsList) return 0;
+
+  return recipe.ingredientsList.reduce((total, item) => {
+    const uniqueId = `${item.itemType}-${item.itemId}`;
+    const ingredientOrSubRecipe = props.allIngredientsAndSubRecipes.find(
+      (i) => `${i.isSubRecipe ? 'recipe' : 'ingredient'}-${i.id}` === uniqueId
+    );
+
+    if (!ingredientOrSubRecipe) return total;
+
+    let itemCost = 0;
+    const quantity = Number(item.quantity || 0);
+
+    if (ingredientOrSubRecipe.isSubRecipe) {
+      // ถ้าเป็นสูตรย่อย ให้เรียกฟังก์ชันนี้ซ้ำเพื่อหาต้นทุนของมัน
+      const subRecipeCost = calculateRecipeCost(ingredientOrSubRecipe);
+      const subRecipeWeight =
+        ingredientOrSubRecipe.ingredientsList.reduce(
+          (sum, subItem) => sum + Number(subItem.quantity || 0),
+          0
+        ) || 1;
+      const costPerGramOfSubRecipe = subRecipeCost / subRecipeWeight;
+      itemCost = quantity * costPerGramOfSubRecipe;
+    } else {
+      // ถ้าเป็นวัตถุดิบปกติ
+      itemCost = quantity * Number(ingredientOrSubRecipe.costPerGram || 0);
+    }
+    return total + itemCost;
+  }, 0);
+}
+
+// **UPDATED:** baseCost จะเรียกใช้ฟังก์ชันใหม่
+const baseCost = computed(() => {
+  return calculateRecipeCost(props.recipe);
+});
+
+// **NEW:** คำนวณต้นทุนต่อกรัมของสูตร
+const costPerGram = computed(() => {
+  if (!baseWeight.value) return 0;
+  return baseCost.value / baseWeight.value;
+});
+
+// **NEW:** คำนวณต้นทุนทั้งหมดที่จะทำ
+const totalProductionCost = computed(() => {
+  if (isCalculationActive.value) {
+    return totalProductionWeight.value * costPerGram.value;
+  }
+  return baseCost.value;
+});
 </script>
 
 <template>
   <div class="p-6">
     <h3 class="mb-4 text-2xl font-semibold">
-      ดูสูตรด่วน: <span class="text-primary">{{ recipe.name }}</span>
+      <span class="text-primary">{{ recipe.name }}</span>
     </h3>
 
     <div class="mb-4 grid grid-cols-2 gap-4 rounded-md bg-gray-50 p-4">
@@ -124,6 +175,30 @@ async function saveAsImage() {
           })
         }}</span>
         <span class="text-gray-600"> กรัม</span>
+        <div class="col-span-2 rounded-md bg-white p-2 text-center">
+          <span class="text-gray-600">
+            {{
+              isCalculationActive
+                ? 'ต้นทุนที่จะทำทั้งหมด:'
+                : 'ต้นทุนสูตรพื้นฐาน:'
+            }}
+          </span>
+          <span class="ml-2 text-lg font-bold text-primary">{{
+            totalProductionCost.toLocaleString('en-US', {
+              maximumFractionDigits: 2,
+            })
+          }}</span>
+          <span class="text-gray-600"> บาท</span>
+          <p class="mt-1 text-xs text-gray-500">
+            (น้ำหนักรวม:
+            {{
+              totalProductionWeight.toLocaleString('en-US', {
+                maximumFractionDigits: 2,
+              })
+            }}
+            กรัม, ต้นทุน: {{ costPerGram.toFixed(4) }} บาท/กรัม)
+          </p>
+        </div>
         <div class="mt-2 text-center">
           <button
             @click="saveAsImage"

@@ -129,11 +129,11 @@ onMounted(fetchData);
     <div class="rounded-lg bg-white p-4 shadow-md">
       <div class="overflow-x-auto">
         <div class="mb-6 flex items-center justify-between">
-          <h1 class="text-3xl font-bold">สูตรขนม.</h1>
+          <h1 class="text-2xl font-bold">จัดการสูตรขนม</h1>
 
           <button
             @click="openAddModal"
-            class="rounded-lg bg-primary px-4 py-2 font-bold text-white transition-opacity hover:bg-opacity-90"
+            class="rounded-lg bg-primary px-4 py-2 text-white transition-opacity hover:bg-opacity-90"
           >
             + เพิ่มสูตรใหม่
           </button>
