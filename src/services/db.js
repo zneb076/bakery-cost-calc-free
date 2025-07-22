@@ -7,8 +7,8 @@ db.version(13).stores({
     '++id, &name, purchaseUnit, purchaseQuantity, purchasePrice, costPerGram, defaultYield, costByWholeUnit, standardWeightInGrams',
   recipes: '++id, &name, isSubRecipe, ingredientsList, notes',
   settings: '&key, value',
-  products: '++id, &name, recipeId',
-  analysisGroups: '++id, &name, groupType, recipes', // นำตารางนี้กลับมา
+  products: '++id, &name, recipeId, weight, price',
+  analysisGroups: '++id, &name, groupType, products',
 });
 
 // คงเวอร์ชันเก่าไว้

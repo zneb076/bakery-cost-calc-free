@@ -12,7 +12,11 @@ const emit = defineEmits(['save', 'cancel']);
 
 const group = ref({});
 const productOptions = computed(() => {
-  return props.availableProducts.map((p) => ({ value: p.id, label: p.name }));
+  return props.availableProducts.map((p) => ({
+    value: p.id,
+    label: p.name,
+    price: p.price, // ส่งราคามาด้วย
+  }));
 });
 
 watch(
@@ -31,6 +35,16 @@ function addRow() {
 }
 function removeRow(index) {
   group.value.products.splice(index, 1);
+}
+
+// เมื่อเลือกสินค้า ให้ดึงราคามาใส่ให้
+function onProductSelect(item) {
+  const selectedProduct = productOptions.value.find(
+    (opt) => opt.value === item.productId
+  );
+  if (selectedProduct) {
+    item.price = selectedProduct.price;
+  }
 }
 
 function handleSubmit() {
@@ -56,7 +70,9 @@ function handleSubmit() {
 <template>
   <form @submit.prevent="handleSubmit">
     <div class="p-6">
-      <h3 class="mb-4 text-2xl font-semibold">กลุ่มสำหรับหาจุดคุ้มทุน</h3>
+      <h3 class="mb-4 text-2xl font-semibold">
+        {{ group.id ? 'แก้ไขกลุ่ม' : 'สร้างกลุ่มสำหรับหาจุดคุ้มทุน' }}
+      </h3>
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium">ชื่อกลุ่ม</label>
@@ -74,45 +90,50 @@ function handleSubmit() {
               :key="index"
               class="rounded-lg bg-gray-50 p-3"
             >
-              <label class="block text-xs font-medium text-gray-600"
-                >สินค้า #{{ index + 1 }}</label
-              >
-              <Multiselect
-                v-model="item.productId"
-                :options="productOptions"
-                placeholder="เลือกสินค้า"
-                class="mt-1 flex-grow"
-              />
-              <div class="mt-2 flex items-center space-x-2">
-                <div>
+              <div class="flex items-center space-x-2">
+                <div class="flex-grow">
                   <label class="block text-xs font-medium text-gray-600"
-                    >สัดส่วนการขาย (%)</label
+                    >สินค้า</label
+                  >
+                  <Multiselect
+                    v-model="item.productId"
+                    :options="productOptions"
+                    @select="onProductSelect(item)"
+                    placeholder="เลือกสินค้า"
+                    class="mt-1"
+                  />
+                </div>
+                <button
+                  @click="removeRow(index)"
+                  type="button"
+                  class="mb-2 flex h-10 w-10 flex-shrink-0 items-center justify-center self-end text-red-500"
+                >
+                  <font-awesome-icon icon="trash" />
+                </button>
+              </div>
+              <div class="mt-2 flex items-center space-x-2">
+                <div class="flex-grow">
+                  <label class="block text-xs font-medium text-gray-600"
+                    >สัดส่วนการขาย</label
                   >
                   <input
                     v-model.number="item.salesMix"
                     type="number"
-                    placeholder="สัดส่วน"
-                    class="mt-1 w-36 flex-grow rounded-md border p-2"
+                    placeholder="เช่น 7"
+                    class="mt-1 w-full rounded-md border p-2"
                   />
                 </div>
-                <div>
+                <div class="flex-grow">
                   <label class="block text-xs font-medium text-gray-600"
                     >ราคาขาย (บาท)</label
                   >
                   <input
                     v-model.number="item.price"
                     type="number"
-                    placeholder="ราคาขาย"
-                    class="mt-1 w-36 flex-grow rounded-md border p-2"
+                    placeholder="เช่น 25"
+                    class="mt-1 w-full rounded-md border p-2"
                   />
                 </div>
-                <button
-                  @click="removeRow(index)"
-                  type="button"
-                  class="mb-2 self-end text-red-500"
-                >
-                  <font-awesome-icon icon="trash" />
-                </button>
               </div>
             </div>
           </div>
