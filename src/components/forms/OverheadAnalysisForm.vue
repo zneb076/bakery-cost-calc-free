@@ -6,31 +6,31 @@ import Swal from 'sweetalert2';
 
 const props = defineProps({
   initialData: { type: Object, required: true },
-  availableRecipes: { type: Array, required: true },
+  availableProducts: { type: Array, required: true },
 });
 const emit = defineEmits(['save', 'cancel']);
 
 const group = ref({});
-const recipeOptions = computed(() => {
-  return props.availableRecipes.map((r) => ({ value: r.id, label: r.name }));
+const productOptions = computed(() => {
+  return props.availableProducts.map((p) => ({ value: p.id, label: p.name }));
 });
 
 watch(
   () => props.initialData,
   (newData) => {
     group.value = JSON.parse(JSON.stringify(newData));
-    if (!group.value.recipes || group.value.recipes.length === 0) {
-      group.value.recipes = [{ recipeId: null, monthlySales: null }];
+    if (!group.value.products || group.value.products.length === 0) {
+      group.value.products = [{ productId: null, monthlySales: null }];
     }
   },
   { immediate: true, deep: true }
 );
 
-function addRecipeRow() {
-  group.value.recipes.push({ recipeId: null, monthlySales: null });
+function addRow() {
+  group.value.products.push({ productId: null, monthlySales: null });
 }
-function removeRecipeRow(index) {
-  group.value.recipes.splice(index, 1);
+function removeRow(index) {
+  group.value.products.splice(index, 1);
 }
 
 function handleSubmit() {
@@ -38,18 +38,18 @@ function handleSubmit() {
     Swal.fire('ข้อมูลไม่ครบถ้วน', 'กรุณาใส่ชื่อกลุ่ม', 'error');
     return;
   }
-  const validRecipes = group.value.recipes.filter(
-    (r) => r.recipeId && r.monthlySales > 0
+  const validProducts = group.value.products.filter(
+    (p) => p.productId && p.monthlySales > 0
   );
-  if (validRecipes.length === 0) {
+  if (validProducts.length === 0) {
     Swal.fire(
       'ข้อมูลไม่ครบถ้วน',
-      'กรุณาเพิ่มขนมและยอดขายอย่างน้อย 1 รายการ',
+      'กรุณาเลือกสินค้าและใส่ยอดขายอย่างน้อย 1 รายการ',
       'error'
     );
     return;
   }
-  emit('save', { ...group.value, recipes: validRecipes });
+  emit('save', { ...group.value, products: validProducts });
 }
 </script>
 
@@ -67,27 +67,27 @@ function handleSubmit() {
           />
         </div>
         <div class="border-t pt-4">
-          <h4 class="mb-2 font-semibold">รายการขนมในกลุ่ม</h4>
+          <h4 class="mb-2 font-semibold">รายการสินค้าในกลุ่ม</h4>
           <div class="space-y-3">
             <div
-              v-for="(recipeItem, index) in group.recipes"
+              v-for="(item, index) in group.products"
               :key="index"
               class="flex items-center space-x-2"
             >
               <Multiselect
-                v-model="recipeItem.recipeId"
-                :options="recipeOptions"
-                placeholder="เลือกสูตร"
+                v-model="item.productId"
+                :options="productOptions"
+                placeholder="เลือกสินค้า"
                 class="flex-grow"
               />
               <input
-                v-model.number="recipeItem.monthlySales"
+                v-model.number="item.monthlySales"
                 type="number"
                 placeholder="ยอดขาย/เดือน (ชิ้น)"
                 class="w-40 rounded-md border p-2"
               />
               <button
-                @click="removeRecipeRow(index)"
+                @click="removeRow(index)"
                 type="button"
                 class="text-red-500"
               >
@@ -96,11 +96,11 @@ function handleSubmit() {
             </div>
           </div>
           <button
-            @click="addRecipeRow"
+            @click="addRow"
             type="button"
             class="mt-4 font-semibold text-primary"
           >
-            + เพิ่มขนม
+            + เพิ่มสินค้า
           </button>
         </div>
       </div>

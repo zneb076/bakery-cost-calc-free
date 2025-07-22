@@ -45,6 +45,11 @@ const routes = [
     component: () => import('../views/BreakEvenCalculatorView.vue'),
   },
   {
+    path: '/calculator-overhead', // path ใหม่
+    name: 'CalculatorOverhead',
+    component: () => import('../views/OverheadCalculatorView.vue'),
+  },
+  {
     path: '/products',
     name: 'Products',
     component: () => import('../views/ProductManagementView.vue'),

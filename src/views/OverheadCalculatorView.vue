@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { db } from '../services/db.js';
 import BaseModal from '../components/BaseModal.vue';
 import OverheadAnalysisForm from '../components/forms/OverheadAnalysisForm.vue';
@@ -9,23 +9,27 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 const GROUP_TYPE = 'overhead';
 
 const analysisGroups = ref([]);
-const availableRecipes = ref([]);
+const allProducts = ref([]);
+const allRecipes = ref([]);
 const allIngredients = ref([]);
 const allSubRecipes = ref([]);
 const fixedCosts = ref(10000);
-
 const calculationResult = ref(null);
+
 const isGroupModalOpen = ref(false);
 const editingGroup = ref(null);
+const isStepsModalOpen = ref(false);
 
 async function fetchData() {
-  const [groups, recipes, ingredients] = await Promise.all([
+  const [groups, products, recipes, ingredients] = await Promise.all([
     db.analysisGroups.where('groupType').equals(GROUP_TYPE).toArray(),
+    db.products.toArray(),
     db.recipes.toArray(),
     db.ingredients.toArray(),
   ]);
   analysisGroups.value = groups;
-  availableRecipes.value = recipes.filter((r) => !r.isSubRecipe);
+  allProducts.value = products;
+  allRecipes.value = recipes;
   allSubRecipes.value = recipes.filter((r) => r.isSubRecipe);
   allIngredients.value = ingredients;
 }
@@ -34,7 +38,7 @@ onMounted(fetchData);
 function openAddModal() {
   editingGroup.value = {
     name: '',
-    recipes: [{ recipeId: null, monthlySales: null }],
+    products: [{ productId: null, monthlySales: null }],
   };
   isGroupModalOpen.value = true;
 }
@@ -96,34 +100,45 @@ async function deleteGroup(id, name) {
 
 async function calculateOverhead(group) {
   calculationResult.value = null;
-  if (!group) {
-    return;
-  }
+  if (!group) return;
 
   const productDetails = [];
   let totalMonthlyVariableCost = 0;
 
-  for (const product of group.recipes) {
-    const recipe = availableRecipes.value.find(
-      (r) => r.id === product.recipeId
+  for (const product of group.products) {
+    const productInfo = allProducts.value.find(
+      (p) => p.id === product.productId
     );
-    if (!recipe || !product.monthlySales) continue;
+    const recipe = allRecipes.value.find((r) => r.id === productInfo?.recipeId);
+    if (!recipe || !productInfo || !product.monthlySales) continue;
 
+    const totalRecipeWeight =
+      recipe.ingredientsList.reduce(
+        (sum, item) => sum + Number(item.quantity || 0),
+        0
+      ) || 1;
     const flatIngredients = await expandRecipe(recipe, 1);
-    const variableCostPerUnit = flatIngredients.reduce(
-      (sum, ing) => sum + ing.totalCost,
-      0
-    );
+    const variableCostPerGram =
+      flatIngredients.reduce((sum, ing) => sum + ing.totalCost, 0) /
+      totalRecipeWeight;
+    const variableCostPerUnit =
+      variableCostPerGram * Number(productInfo.weight);
+
     const monthlyVariableCost =
       variableCostPerUnit * Number(product.monthlySales);
 
     totalMonthlyVariableCost += monthlyVariableCost;
     productDetails.push({
       ...product,
-      name: recipe.name,
+      name: productInfo.name,
       variableCostPerUnit,
       monthlyVariableCost,
     });
+  }
+
+  if (totalMonthlyVariableCost === 0) {
+    Swal.fire('คำนวณไม่ได้', 'ต้นทุนวัตถุดิบรวมของกลุ่มเป็นศูนย์', 'warning');
+    return;
   }
 
   const results = productDetails.map((p) => {
@@ -131,10 +146,23 @@ async function calculateOverhead(group) {
     const allocatedFixedCost = Number(fixedCosts.value || 0) * costRatio;
     const overheadPerUnit = allocatedFixedCost / Number(p.monthlySales);
     const trueCostPerUnit = p.variableCostPerUnit + overheadPerUnit;
-    return { ...p, allocatedFixedCost, overheadPerUnit, trueCostPerUnit };
+    return {
+      name: p.name,
+      variableCostPerUnit: p.variableCostPerUnit,
+      overheadPerUnit,
+      trueCostPerUnit,
+      costRatio,
+      monthlySales: p.monthlySales,
+      productId: p.productId,
+      monthlyVariableCost: p.monthlyVariableCost,
+    };
   });
 
-  calculationResult.value = { groupName: group.name, results };
+  calculationResult.value = {
+    groupName: group.name,
+    results,
+    totalMonthlyVariableCost,
+  };
 }
 
 async function expandRecipe(recipe, scalingFactor) {
@@ -146,24 +174,19 @@ async function expandRecipe(recipe, scalingFactor) {
       item.quantity <= 0
     )
       continue;
-
     const netQuantity = Number(item.quantity) * scalingFactor;
     const yieldFactor = Number(item.yield || 100) / 100;
     const grossQuantity = netQuantity / yieldFactor;
-
     if (item.itemType === 'ingredient') {
       const baseIngredient = allIngredients.value.find(
         (i) => i.id === item.itemId
       );
       if (baseIngredient) {
         let cost = 0;
-        let appliedWholeUnit = false;
-
         if (
           item.costByWholeUnit &&
           baseIngredient.purchaseUnit.toLowerCase() !== 'กรัม'
         ) {
-          appliedWholeUnit = true;
           const weightPerUnit = Number(
             baseIngredient.standardWeightInGrams || 1
           );
@@ -175,21 +198,13 @@ async function expandRecipe(recipe, scalingFactor) {
         } else {
           cost = grossQuantity * Number(baseIngredient.costPerGram || 0);
         }
-
         if (ingredientMap.has(baseIngredient.id)) {
-          const existing = ingredientMap.get(baseIngredient.id);
-          existing.totalNetQuantity += netQuantity;
-          existing.totalCost += cost;
-          if (appliedWholeUnit) existing.appliedWholeUnit = true;
-          if (yieldFactor < 1) existing.appliedYield = true;
+          ingredientMap.get(baseIngredient.id).totalCost += cost;
         } else {
           ingredientMap.set(baseIngredient.id, {
             id: baseIngredient.id,
             name: baseIngredient.name,
-            totalNetQuantity: netQuantity,
             totalCost: cost,
-            appliedYield: yieldFactor < 1,
-            appliedWholeUnit: appliedWholeUnit,
           });
         }
       }
@@ -206,14 +221,9 @@ async function expandRecipe(recipe, scalingFactor) {
           subRecipe,
           subRecipeScalingFactor
         );
-
         subIngredients.forEach((subItem) => {
           if (ingredientMap.has(subItem.id)) {
-            const existing = ingredientMap.get(subItem.id);
-            existing.totalNetQuantity += subItem.totalNetQuantity;
-            existing.totalCost += subItem.totalCost;
-            if (subItem.appliedWholeUnit) existing.appliedWholeUnit = true;
-            if (subItem.appliedYield) existing.appliedYield = true;
+            ingredientMap.get(subItem.id).totalCost += subItem.totalCost;
           } else {
             ingredientMap.set(subItem.id, subItem);
           }
@@ -224,17 +234,17 @@ async function expandRecipe(recipe, scalingFactor) {
   return Array.from(ingredientMap.values());
 }
 
-function getRecipeName(recipeId) {
-  return availableRecipes.value.find((r) => r.id === recipeId)?.name || 'N/A';
+function getProductName(productId) {
+  return allProducts.value.find((p) => p.id === productId)?.name || 'N/A';
 }
 </script>
 
 <template>
   <div>
     <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุนแฝงต่อชิ้น</h1>
-    <div class="rounded-lg bg-white p-6 shadow-md">
+    <div class="rounded-lg bg-white p-4 shadow-md">
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-semibold">กลุ่มวิเคราะห์สำหรับหาต้นทุนแฝง</h2>
+        <h2 class="text-2xl font-semibold">กลุ่มสินค้าสำหรับหาต้นทุนแฝง</h2>
         <button
           @click="openAddModal"
           class="rounded-lg bg-primary px-4 py-2 font-bold text-white"
@@ -253,7 +263,9 @@ function getRecipeName(recipeId) {
               <p class="text-xs text-gray-500">
                 ประกอบด้วย:
                 {{
-                  group.recipes.map((r) => getRecipeName(r.recipeId)).join(', ')
+                  group.products
+                    .map((p) => getProductName(p.productId))
+                    .join(', ')
                 }}
               </p>
             </td>
@@ -294,25 +306,33 @@ function getRecipeName(recipeId) {
 
     <div
       v-if="calculationResult"
-      class="mt-6 rounded-lg bg-white p-6 shadow-md"
+      class="mb-8 mt-6 rounded-lg bg-white p-4 shadow-md"
     >
-      <h2 class="mb-4 text-2xl font-semibold">
-        ผลการคำนวณสำหรับกลุ่ม:
-        <span class="text-primary">{{ calculationResult.groupName }}</span>
+      <h2 class="text-2xl font-semibold">
+        ผลการคำนวณ
+        <div class="text-primary">กลุ่ม {{ calculationResult.groupName }}</div>
       </h2>
+      <button
+        @click="isStepsModalOpen = true"
+        class="my-4 text-blue-500 hover:text-blue-700"
+      >
+        <font-awesome-icon icon="circle-info" />
+        <span class="ml-1 text-sm">ดูขั้นตอนการคำนวณ</span>
+      </button>
+
       <table class="min-w-full border text-sm">
         <thead class="bg-gray-100">
           <tr>
-            <th class="px-3 py-2 text-left">ชื่อขนม</th>
-            <th class="px-3 py-2 text-right">ต้นทุนวัตถุดิบ/ชิ้น</th>
-            <th class="px-3 py-2 text-right">ต้นทุนแฝง/ชิ้น</th>
-            <th class="px-3 py-2 text-right">ต้นทุนจริง/ชิ้น</th>
+            <th class="px-1 py-2 text-left">ชื่อสินค้า</th>
+            <th class="px-1 py-2 text-right">ต้นทุนวัตถุดิบ/ชิ้น</th>
+            <th class="px-1 py-2 text-right">ต้นทุนแฝง/ชิ้น</th>
+            <th class="px-1 py-2 text-right">ต้นทุนจริง/ชิ้น</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="p in calculationResult.results"
-            :key="p.recipeId"
+            :key="p.productId"
             class="border-b"
           >
             <td class="px-3 py-2">{{ p.name }}</td>
@@ -333,10 +353,71 @@ function getRecipeName(recipeId) {
     <BaseModal v-if="isGroupModalOpen" @close="closeModal" size="large">
       <OverheadAnalysisForm
         :initial-data="editingGroup"
-        :available-recipes="availableRecipes"
+        :available-products="allProducts"
         @save="handleSave"
         @cancel="closeModal"
       />
+    </BaseModal>
+
+    <BaseModal
+      v-if="isStepsModalOpen"
+      @close="isStepsModalOpen = false"
+      size="large"
+    >
+      <div v-if="calculationResult" class="p-6">
+        <h3 class="mb-4 text-2xl font-semibold">ขั้นตอนการคำนวณต้นทุนแฝง</h3>
+        <div class="space-y-4 text-sm">
+          <div>
+            <p class="font-semibold">
+              1. หาต้นทุนวัตถุดิบรวมของแต่ละชนิด (ต่อเดือน)
+            </p>
+            <ul class="mt-1 list-inside list-disc pl-4">
+              <li v-for="p in calculationResult.results" :key="p.productId">
+                {{ p.name }}: {{ p.variableCostPerUnit.toFixed(2) }} x
+                {{ p.monthlySales }} ชิ้น =
+                {{ p.monthlyVariableCost.toFixed(2) }} บาท
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold">2. หา "สัดส่วนต้นทุน" ของแต่ละชนิด</p>
+            <p class="text-xs text-gray-500">
+              (ต้นทุนรวมของชนิดนั้น / ต้นทุนรวมทั้งหมด)
+            </p>
+            <ul class="mt-1 list-inside list-disc pl-4">
+              <li v-for="p in calculationResult.results" :key="p.productId">
+                {{ p.name }}: {{ p.monthlyVariableCost.toFixed(2) }} /
+                {{ calculationResult.totalMonthlyVariableCost.toFixed(2) }} =
+                {{ (p.costRatio * 100).toFixed(2) }}%
+              </li>
+            </ul>
+          </div>
+          <div>
+            <p class="font-semibold">
+              3. ปันส่วนต้นทุนคงที่ และหาต้นทุนแฝงต่อชิ้น
+            </p>
+            <ul class="mt-1 list-inside list-disc pl-4">
+              <li v-for="p in calculationResult.results" :key="p.productId">
+                {{ p.name }}: ({{ Number(fixedCosts).toLocaleString() }} x
+                {{ (p.costRatio * 100).toFixed(2) }}%) /
+                {{ p.monthlySales }} ชิ้น =
+                <span class="font-semibold">{{
+                  p.overheadPerUnit.toFixed(2)
+                }}</span>
+                บาท/ชิ้น
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="mt-6 text-right">
+          <button
+            @click="isStepsModalOpen = false"
+            class="rounded-md bg-primary px-4 py-2 text-white"
+          >
+            ปิด
+          </button>
+        </div>
+      </div>
     </BaseModal>
   </div>
 </template>
