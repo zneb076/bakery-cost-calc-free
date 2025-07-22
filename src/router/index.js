@@ -33,6 +33,22 @@ const routes = [
     name: 'SettingsGeneral',
     component: () => import('../views/SettingsGeneralView.vue'),
   },
+
+  {
+    path: '/calculator-advance', // 2. กำหนด path
+    name: 'CalculatorAdvance',
+    component: () => import('../views/AdvanceCalculatorView.vue'), // 3. ชี้มาที่ Component ใหม่
+  },
+  {
+    path: '/calculator-breakeven', // path ใหม่
+    name: 'CalculatorBreakEven',
+    component: () => import('../views/BreakEvenCalculatorView.vue'),
+  },
+  {
+    path: '/products',
+    name: 'Products',
+    component: () => import('../views/ProductManagementView.vue'),
+  },
 ];
 
 const router = createRouter({

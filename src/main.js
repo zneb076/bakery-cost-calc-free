@@ -32,6 +32,9 @@ import {
   faChevronDown,
   faChevronUp,
   faChartLine,
+  faObjectGroup,
+  faChartPie,
+  faBoxOpen,
 } from '@fortawesome/free-solid-svg-icons';
 import { faFacebook } from '@fortawesome/free-brands-svg-icons'; // 1. Import faFacebook
 
@@ -63,7 +66,10 @@ library.add(
   faChevronUp,
   faChartLine,
   faChevronDown,
-  faUtensils
+  faUtensils,
+  faObjectGroup,
+  faChartPie,
+  faBoxOpen
 );
 
 const app = createApp(App);

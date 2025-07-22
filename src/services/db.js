@@ -2,6 +2,58 @@ import Dexie from 'dexie';
 
 export const db = new Dexie('khoEakKhamDB');
 
+db.version(13).stores({
+  ingredients:
+    '++id, &name, purchaseUnit, purchaseQuantity, purchasePrice, costPerGram, defaultYield, costByWholeUnit, standardWeightInGrams',
+  recipes: '++id, &name, isSubRecipe, ingredientsList, notes',
+  settings: '&key, value',
+  products: '++id, &name, recipeId',
+  analysisGroups: '++id, &name, groupType, recipes', // นำตารางนี้กลับมา
+});
+
+// คงเวอร์ชันเก่าไว้
+db.version(12).stores({
+  ingredients:
+    '++id, &name, purchaseUnit, purchaseQuantity, purchasePrice, costPerGram, defaultYield, costByWholeUnit, standardWeightInGrams',
+  recipes: '++id, &name, isSubRecipe, ingredientsList, notes',
+  settings: '&key, value',
+  products: '++id, &name, recipeId',
+  analysisGroups: null,
+});
+
+db.version(11).stores({
+  ingredients:
+    '++id, &name, purchaseUnit, purchaseQuantity, purchasePrice, costPerGram, defaultYield, costByWholeUnit, standardWeightInGrams',
+  recipes: '++id, &name, isSubRecipe, ingredientsList, notes',
+  settings: '&key, value',
+  analysisGroups: '++id, &name, groupType, recipes',
+  products: '++id, &name, recipeId', // ตารางใหม่สำหรับสินค้า
+});
+
+db.version(10).stores({
+  ingredients:
+    '++id, &name, purchaseUnit, purchaseQuantity, purchasePrice, costPerGram, defaultYield, costByWholeUnit, standardWeightInGrams',
+  recipes: '++id, &name, isSubRecipe, ingredientsList, notes',
+  settings: '&key, value',
+  // เพิ่ม index 'groupType'
+  analysisGroups: '++id, &name, groupType, recipes',
+});
+
+// คงเวอร์ชันเก่าไว้
+db.version(9)
+  .stores({
+    // ... (schema ของ v9)
+  })
+  .upgrade((tx) => {
+    // เพิ่มค่าเริ่มต้น groupType ให้กับข้อมูลเก่า (ถ้ามี)
+    return tx
+      .table('analysisGroups')
+      .toCollection()
+      .modify((group) => {
+        group.groupType = 'general'; // กำหนดค่า default
+      });
+  });
+
 db.version(8)
   .stores({
     ingredients:

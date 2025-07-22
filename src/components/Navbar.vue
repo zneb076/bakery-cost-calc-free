@@ -12,12 +12,13 @@ const menuItems = [
   { text: 'หน้าหลัก', name: 'Home', icon: 'home' },
   { text: '1. จัดการวัตถุดิบ', name: 'Ingredients', icon: 'cheese' },
   { text: '2. จัดการสูตรขนม', name: 'Recipes', icon: 'book' },
-  { text: '3. คำนวณต้นทุน (Basic)', name: 'Calculator', icon: 'calculator' },
+  { text: '3. จัดการสินค้า', name: 'Products', icon: 'box-open' },
+  { text: '4. คำนวณต้นทุน (Basic)', name: 'Calculator', icon: 'calculator' },
   {
-    text: '4. คำนวณต้นทุน (Advance) (Coming Soon)',
-    name: 'Calculator',
+    text: '5. คำนวณต้นทุน (Advance)',
+    name: 'CalculatorAdvance',
     icon: 'chart-line',
-    disabled: true,
+    disabled: false,
   },
   {
     text: 'ตั้งค่า',
