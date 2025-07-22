@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import { db } from '../services/db.js';
 import Swal from 'sweetalert2';
 import BaseModal from '../components/BaseModal.vue';
@@ -18,6 +18,8 @@ const calculationResult = ref(null);
 const isGroupModalOpen = ref(false);
 const editingGroup = ref(null);
 const isStepsModalOpen = ref(false);
+
+const resultsSection = ref(null);
 
 async function fetchData() {
   const [groups, products, recipes, ingredients] = await Promise.all([
@@ -104,82 +106,91 @@ async function calculateBreakEven(group) {
   let totalMixRatio = 0;
   let totalWeightedCm = 0;
   const productDetails = [];
+  try {
+    for (const product of group.products) {
+      const productInfo = allProducts.value.find(
+        (p) => p.id === product.productId
+      );
+      const recipe = allRecipes.value.find(
+        (r) => r.id === productInfo?.recipeId
+      );
+      if (!recipe || !productInfo) continue;
 
-  for (const product of group.products) {
-    const productInfo = allProducts.value.find(
-      (p) => p.id === product.productId
-    );
-    const recipe = allRecipes.value.find((r) => r.id === productInfo?.recipeId);
-    if (!recipe || !productInfo) continue;
+      const totalRecipeWeight =
+        recipe.ingredientsList.reduce(
+          (sum, item) => sum + Number(item.quantity || 0),
+          0
+        ) || 1;
+      const flatIngredients = await expandRecipe(recipe, 1);
+      const variableCostPerGram =
+        flatIngredients.reduce((sum, ing) => sum + ing.totalCost, 0) /
+        totalRecipeWeight;
+      const variableCost = variableCostPerGram * Number(productInfo.weight);
 
-    const totalRecipeWeight =
-      recipe.ingredientsList.reduce(
-        (sum, item) => sum + Number(item.quantity || 0),
-        0
-      ) || 1;
-    const flatIngredients = await expandRecipe(recipe, 1);
-    const variableCostPerGram =
-      flatIngredients.reduce((sum, ing) => sum + ing.totalCost, 0) /
-      totalRecipeWeight;
-    const variableCost = variableCostPerGram * Number(productInfo.weight);
+      const sellingPrice = Number(productInfo.price);
+      const contributionMargin = sellingPrice - variableCost;
+      const mixRatio = Number(product.salesMix);
 
-    const sellingPrice = Number(productInfo.price);
-    const contributionMargin = sellingPrice - variableCost;
-    const mixRatio = Number(product.salesMix);
+      totalMixRatio += mixRatio;
+      totalWeightedCm += contributionMargin * mixRatio;
+      productDetails.push({
+        ...product,
+        name: productInfo.name,
+        variableCost,
+        sellingPrice,
+        contributionMargin,
+      });
+    }
 
-    totalMixRatio += mixRatio;
-    totalWeightedCm += contributionMargin * mixRatio;
-    productDetails.push({
-      ...product,
-      name: productInfo.name,
-      variableCost,
-      sellingPrice,
-      contributionMargin,
+    if (totalMixRatio === 0 || totalWeightedCm <= 0) {
+      Swal.fire(
+        'คำนวณไม่ได้',
+        'ข้อมูลไม่ถูกต้อง หรือกำไรส่วนเกินติดลบ',
+        'warning'
+      );
+      return;
+    }
+
+    const weightedAverageCm = totalWeightedCm / totalMixRatio;
+    const breakEvenPointTotalUnits =
+      Number(fixedCosts.value || 0) / weightedAverageCm;
+
+    let breakEvenPointRevenue = 0;
+    const breakEvenUnitsByProduct = productDetails.map((p) => {
+      const units = breakEvenPointTotalUnits * (p.salesMix / totalMixRatio);
+      breakEvenPointRevenue += units * p.sellingPrice;
+      return { name: p.name, units: Math.ceil(units) };
     });
+
+    const projections = [];
+    const baseRevenue =
+      breakEvenPointRevenue > 0 ? breakEvenPointRevenue : 10000;
+    for (let i = 1; i <= 5; i++) {
+      const projectedRevenue = baseRevenue + baseRevenue * 0.1 * i;
+      const projectedUnits =
+        breakEvenPointRevenue > 0
+          ? breakEvenPointTotalUnits *
+            (projectedRevenue / breakEvenPointRevenue)
+          : 0;
+      const projectedProfit =
+        projectedUnits * weightedAverageCm - Number(fixedCosts.value || 0);
+      projections.push({ revenue: projectedRevenue, profit: projectedProfit });
+    }
+
+    calculationResult.value = {
+      groupName: group.name,
+      productDetails,
+      weightedAverageCm,
+      breakEvenPointUnits: Math.ceil(breakEvenPointTotalUnits),
+      breakEvenPointRevenue,
+      breakEvenUnitsByProduct,
+      projections,
+    };
+    await nextTick();
+    resultsSection.value?.scrollIntoView({ behavior: 'smooth' });
+  } catch (error) {
+    console.error('Calculation Error:', error);
   }
-
-  if (totalMixRatio === 0 || totalWeightedCm <= 0) {
-    Swal.fire(
-      'คำนวณไม่ได้',
-      'ข้อมูลไม่ถูกต้อง หรือกำไรส่วนเกินติดลบ',
-      'warning'
-    );
-    return;
-  }
-
-  const weightedAverageCm = totalWeightedCm / totalMixRatio;
-  const breakEvenPointTotalUnits =
-    Number(fixedCosts.value || 0) / weightedAverageCm;
-
-  let breakEvenPointRevenue = 0;
-  const breakEvenUnitsByProduct = productDetails.map((p) => {
-    const units = breakEvenPointTotalUnits * (p.salesMix / totalMixRatio);
-    breakEvenPointRevenue += units * p.sellingPrice;
-    return { name: p.name, units: Math.ceil(units) };
-  });
-
-  const projections = [];
-  const baseRevenue = breakEvenPointRevenue > 0 ? breakEvenPointRevenue : 10000;
-  for (let i = 1; i <= 5; i++) {
-    const projectedRevenue = baseRevenue + baseRevenue * 0.1 * i;
-    const projectedUnits =
-      breakEvenPointRevenue > 0
-        ? breakEvenPointTotalUnits * (projectedRevenue / breakEvenPointRevenue)
-        : 0;
-    const projectedProfit =
-      projectedUnits * weightedAverageCm - Number(fixedCosts.value || 0);
-    projections.push({ revenue: projectedRevenue, profit: projectedProfit });
-  }
-
-  calculationResult.value = {
-    groupName: group.name,
-    productDetails,
-    weightedAverageCm,
-    breakEvenPointUnits: Math.ceil(breakEvenPointTotalUnits),
-    breakEvenPointRevenue,
-    breakEvenUnitsByProduct,
-    projections,
-  };
 }
 
 async function expandRecipe(recipe, scalingFactor) {
@@ -262,9 +273,11 @@ function getProductName(productId) {
     <div class="rounded-lg bg-white p-6 shadow-md">
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-semibold">กลุ่มสินค้าสำหรับหาจุดคุ้มทุน</h2>
+      </div>
+      <div class="text-right">
         <button
           @click="openAddModal"
-          class="rounded-lg bg-primary px-4 py-2 font-bold text-white"
+          class="mb-3 rounded-lg bg-primary px-4 py-2 text-sm text-white"
         >
           + สร้างกลุ่มใหม่
         </button>
@@ -286,13 +299,14 @@ function getProductName(productId) {
                 }}
               </p>
             </td>
-            <td class="space-x-2 py-2 text-right">
+            <td class="w-24 space-x-2 py-2 text-right">
               <button
                 @click="calculateBreakEven(group)"
-                class="rounded bg-green-500 px-3 py-1 text-white"
+                class="rounded bg-green-500 px-3 py-1 text-sm text-white"
               >
                 เลือกใช้
               </button>
+              <br />
               <button
                 @click="openEditModal(group)"
                 class="text-gray-500 hover:text-secondary"
@@ -322,17 +336,20 @@ function getProductName(productId) {
     </div>
 
     <div
+      ref="resultsSection"
       v-if="calculationResult"
-      class="mt-6 space-y-6 rounded-lg bg-white p-6 shadow-md"
+      class="mb-8 mt-6 space-y-6 rounded-lg bg-white p-6 shadow-md"
     >
-      <div class="flex items-center justify-between">
+      <div class="items-center justify-between">
         <h2 class="text-2xl font-semibold">
-          ผลการคำนวณสำหรับกลุ่ม:
-          <span class="text-primary">{{ calculationResult.groupName }}</span>
+          ผลการคำนวณ
+          <div class="text-xl text-primary">
+            กลุ่มสินค้า: {{ calculationResult.groupName }}
+          </div>
         </h2>
         <button
           @click="isStepsModalOpen = true"
-          class="text-blue-500 hover:text-blue-700"
+          class="my-4 text-blue-500 hover:text-blue-700"
         >
           <font-awesome-icon icon="circle-info" />
           <span class="ml-1 text-sm">ดูขั้นตอนการคำนวณ</span>

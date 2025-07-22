@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import { db } from '../services/db.js';
 import BaseModal from '../components/BaseModal.vue';
 import OverheadAnalysisForm from '../components/forms/OverheadAnalysisForm.vue';
@@ -19,6 +19,8 @@ const calculationResult = ref(null);
 const isGroupModalOpen = ref(false);
 const editingGroup = ref(null);
 const isStepsModalOpen = ref(false);
+
+const resultsSection = ref(null);
 
 async function fetchData() {
   const [groups, products, recipes, ingredients] = await Promise.all([
@@ -104,65 +106,72 @@ async function calculateOverhead(group) {
 
   const productDetails = [];
   let totalMonthlyVariableCost = 0;
+  try {
+    for (const product of group.products) {
+      const productInfo = allProducts.value.find(
+        (p) => p.id === product.productId
+      );
+      const recipe = allRecipes.value.find(
+        (r) => r.id === productInfo?.recipeId
+      );
+      if (!recipe || !productInfo || !product.monthlySales) continue;
 
-  for (const product of group.products) {
-    const productInfo = allProducts.value.find(
-      (p) => p.id === product.productId
-    );
-    const recipe = allRecipes.value.find((r) => r.id === productInfo?.recipeId);
-    if (!recipe || !productInfo || !product.monthlySales) continue;
+      const totalRecipeWeight =
+        recipe.ingredientsList.reduce(
+          (sum, item) => sum + Number(item.quantity || 0),
+          0
+        ) || 1;
+      const flatIngredients = await expandRecipe(recipe, 1);
+      const variableCostPerGram =
+        flatIngredients.reduce((sum, ing) => sum + ing.totalCost, 0) /
+        totalRecipeWeight;
+      const variableCostPerUnit =
+        variableCostPerGram * Number(productInfo.weight);
 
-    const totalRecipeWeight =
-      recipe.ingredientsList.reduce(
-        (sum, item) => sum + Number(item.quantity || 0),
-        0
-      ) || 1;
-    const flatIngredients = await expandRecipe(recipe, 1);
-    const variableCostPerGram =
-      flatIngredients.reduce((sum, ing) => sum + ing.totalCost, 0) /
-      totalRecipeWeight;
-    const variableCostPerUnit =
-      variableCostPerGram * Number(productInfo.weight);
+      const monthlyVariableCost =
+        variableCostPerUnit * Number(product.monthlySales);
 
-    const monthlyVariableCost =
-      variableCostPerUnit * Number(product.monthlySales);
+      totalMonthlyVariableCost += monthlyVariableCost;
+      productDetails.push({
+        ...product,
+        name: productInfo.name,
+        variableCostPerUnit,
+        monthlyVariableCost,
+      });
+    }
 
-    totalMonthlyVariableCost += monthlyVariableCost;
-    productDetails.push({
-      ...product,
-      name: productInfo.name,
-      variableCostPerUnit,
-      monthlyVariableCost,
+    if (totalMonthlyVariableCost === 0) {
+      Swal.fire('คำนวณไม่ได้', 'ต้นทุนวัตถุดิบรวมของกลุ่มเป็นศูนย์', 'warning');
+      return;
+    }
+
+    const results = productDetails.map((p) => {
+      const costRatio = p.monthlyVariableCost / totalMonthlyVariableCost;
+      const allocatedFixedCost = Number(fixedCosts.value || 0) * costRatio;
+      const overheadPerUnit = allocatedFixedCost / Number(p.monthlySales);
+      const trueCostPerUnit = p.variableCostPerUnit + overheadPerUnit;
+      return {
+        name: p.name,
+        variableCostPerUnit: p.variableCostPerUnit,
+        overheadPerUnit,
+        trueCostPerUnit,
+        costRatio,
+        monthlySales: p.monthlySales,
+        productId: p.productId,
+        monthlyVariableCost: p.monthlyVariableCost,
+      };
     });
-  }
 
-  if (totalMonthlyVariableCost === 0) {
-    Swal.fire('คำนวณไม่ได้', 'ต้นทุนวัตถุดิบรวมของกลุ่มเป็นศูนย์', 'warning');
-    return;
-  }
-
-  const results = productDetails.map((p) => {
-    const costRatio = p.monthlyVariableCost / totalMonthlyVariableCost;
-    const allocatedFixedCost = Number(fixedCosts.value || 0) * costRatio;
-    const overheadPerUnit = allocatedFixedCost / Number(p.monthlySales);
-    const trueCostPerUnit = p.variableCostPerUnit + overheadPerUnit;
-    return {
-      name: p.name,
-      variableCostPerUnit: p.variableCostPerUnit,
-      overheadPerUnit,
-      trueCostPerUnit,
-      costRatio,
-      monthlySales: p.monthlySales,
-      productId: p.productId,
-      monthlyVariableCost: p.monthlyVariableCost,
+    calculationResult.value = {
+      groupName: group.name,
+      results,
+      totalMonthlyVariableCost,
     };
-  });
-
-  calculationResult.value = {
-    groupName: group.name,
-    results,
-    totalMonthlyVariableCost,
-  };
+    await nextTick();
+    resultsSection.value?.scrollIntoView({ behavior: 'smooth' });
+  } catch (error) {
+    console.error('Calculation Error:', error);
+  }
 }
 
 async function expandRecipe(recipe, scalingFactor) {
@@ -305,12 +314,15 @@ function getProductName(productId) {
     </div>
 
     <div
+      ref="resultsSection"
       v-if="calculationResult"
       class="mb-8 mt-6 rounded-lg bg-white p-4 shadow-md"
     >
       <h2 class="text-2xl font-semibold">
         ผลการคำนวณ
-        <div class="text-primary">กลุ่ม {{ calculationResult.groupName }}</div>
+        <div class="text-xl text-primary">
+          กลุ่มสินค้า: {{ calculationResult.groupName }}
+        </div>
       </h2>
       <button
         @click="isStepsModalOpen = true"

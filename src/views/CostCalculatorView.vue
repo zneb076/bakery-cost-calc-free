@@ -9,71 +9,94 @@ import BaseModal from '../components/BaseModal.vue';
 
 const resultsSection = ref(null);
 const route = useRoute();
-const finalRecipes = ref([]);
+const allProducts = ref([]);
+const allRecipes = ref([]);
 const allIngredients = ref([]);
 const allSubRecipes = ref([]);
-const selectedRecipeId = ref(null);
-const productionQuantity = ref(10);
+const selectedProductId = ref(null);
+const productionQuantity = ref(20);
 const weightPerPiece = ref(50);
-
-const laborCostPerHour = ref(0);
-const workHours = ref(0);
-const overheadPercent = ref(0);
+const laborCostPerHour = ref(50);
+const workHours = ref(4);
+const overheadPercent = ref(30);
 const finalSellingPricePerPiece = ref(0);
-const defaultProfitMargin = ref(0);
-
+const defaultProfitMargin = ref(50);
 const calculationResult = ref(null);
 const isLoading = ref(false);
 const isSubRecipeModalOpen = ref(false);
 const subRecipeToShow = ref(null);
 
-watch([productionQuantity, weightPerPiece], () => {
-  calculationResult.value = null;
-});
-
 async function fetchData() {
-  try {
-    const [recipes, ingredients] = await Promise.all([
-      db.recipes.toArray(),
-      db.ingredients.toArray(),
-    ]);
-    finalRecipes.value = recipes.filter((r) => !r.isSubRecipe);
-    allSubRecipes.value = recipes.filter((r) => r.isSubRecipe);
-    allIngredients.value = ingredients;
-  } catch (error) {
-    console.error('Failed to fetch data:', error);
-  }
+  const [products, recipes, ingredients, settings] = await Promise.all([
+    db.products.toArray(),
+    db.recipes.toArray(),
+    db.ingredients.toArray(),
+    db.settings.toArray(),
+  ]);
+
+  allProducts.value = products;
+  allRecipes.value = recipes;
+  allSubRecipes.value = recipes.filter((r) => r.isSubRecipe);
+  allIngredients.value = ingredients;
+
+  const settingsMap = new Map(settings.map((s) => [s.key, s.value]));
+  laborCostPerHour.value = settingsMap.get('laborCostPerHour') || 50;
+  workHours.value = settingsMap.get('workHours') || 2;
+  overheadPercent.value = settingsMap.get('overheadPercent') || 15;
+  defaultProfitMargin.value = settingsMap.get('defaultProfitMargin') || 50;
 }
 
 onMounted(async () => {
   await fetchData();
-  const savedSettings = await db.settings.toArray();
-  const settingsMap = new Map(savedSettings.map((s) => [s.key, s.value]));
-  if (route.query.recipeId) {
-    selectedRecipeId.value = Number(route.query.recipeId);
+  // **ส่วนที่แก้ไข:** แก้ไขการเรียกใช้ route.query ให้ถูกต้อง
+  // และตรวจสอบว่ามี productId ส่งมาหรือไม่
+  if (route.query.productId) {
+    selectedProductId.value = Number(route.query.productId);
+  } else if (route.query.recipeId) {
+    // เพิ่มการตรวจสอบเผื่อใช้ชื่อเก่า
+    // Logic สำรอง (ถ้าจำเป็น)
+    console.warn(
+      'Received legacy recipeId, please update link to use productId'
+    );
+    const product = allProducts.value.find(
+      (p) => p.recipeId === Number(route.query.recipeId)
+    );
+    if (product) selectedProductId.value = product.id;
   }
-  laborCostPerHour.value = settingsMap.get('laborCostPerHour') || 50;
-  workHours.value = settingsMap.get('workHours') || 4;
-  overheadPercent.value = settingsMap.get('overheadPercent') || 30;
-  defaultProfitMargin.value = settingsMap.get('defaultProfitMargin') || 50;
+});
+
+watch(selectedProductId, (newId) => {
+  calculationResult.value = null;
+  if (newId) {
+    const product = allProducts.value.find((p) => p.id === newId);
+    if (product) {
+      weightPerPiece.value = product.weight;
+    }
+  }
+});
+
+watch([productionQuantity, weightPerPiece], () => {
+  calculationResult.value = null;
 });
 
 async function calculateCost() {
-  if (!selectedRecipeId.value) {
+  if (!selectedProductId.value) {
     return;
   }
   isLoading.value = true;
   calculationResult.value = null;
 
   try {
-    const mainRecipe = await db.recipes.get(selectedRecipeId.value);
-    if (
-      !mainRecipe.ingredientsList ||
-      mainRecipe.ingredientsList.length === 0
-    ) {
-      return;
+    const product = allProducts.value.find(
+      (p) => p.id === selectedProductId.value
+    );
+    if (!product) {
+      throw new Error('Product not found');
     }
-
+    const mainRecipe = allRecipes.value.find((r) => r.id === product.recipeId);
+    if (!mainRecipe) {
+      throw new Error('Recipe for product not found');
+    }
     const totalWeightNeeded =
       Number(productionQuantity.value || 0) * Number(weightPerPiece.value || 0);
     let totalRecipeWeight =
@@ -256,6 +279,13 @@ async function expandRecipe(recipe, scalingFactor) {
   return Array.from(ingredientMap.values());
 }
 
+const productOptions = computed(() => {
+  return allProducts.value.map((p) => ({
+    value: p.id,
+    label: `${p.name} (${p.weight}g)`,
+  }));
+});
+
 const isYieldApplied = computed(() => {
   return calculationResult.value?.costBreakdown.some(
     (item) => item.appliedYield
@@ -370,20 +400,19 @@ const recipeOptions = computed(() => {
 <template>
   <div class="mx-auto max-w-4xl">
     <div class="rounded-lg bg-white p-4 shadow-md">
-      <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุน</h1>
+      <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุน (Basic)</h1>
       <div class="grid grid-cols-1 items-end gap-6 md:grid-cols-4">
         <div class="md:col-span-2">
           <label class="mb-1 block text-sm font-medium text-gray-700"
-            >เลือกสูตรขนม</label
+            >เลือกสินค้า</label
           >
           <Multiselect
-            v-model="selectedRecipeId"
-            :options="recipeOptions"
+            v-model="selectedProductId"
+            :options="productOptions"
             :searchable="true"
-            placeholder="-- เลือกหรือค้นหาสูตร --"
+            placeholder="-- เลือกหรือค้นหาสินค้า --"
           />
         </div>
-
         <div>
           <label class="mb-1 block text-sm font-medium text-gray-700"
             >จำนวนที่ต้องการผลิต (ชิ้น)</label

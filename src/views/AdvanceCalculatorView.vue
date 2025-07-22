@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="mb-6 text-3xl font-bold">เครื่องคำนวณต้นทุน (ขั้นสูง)</h1>
+    <h1 class="mb-6 p-4 text-3xl font-bold">คำนวณต้นทุน (Advance)</h1>
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       <router-link
