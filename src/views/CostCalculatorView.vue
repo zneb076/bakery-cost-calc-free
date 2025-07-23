@@ -20,8 +20,8 @@ const selectedItemInfo = ref(null);
 const productionQuantity = ref(30);
 const weightPerPiece = ref(50);
 const laborCostPerHour = ref(50);
-const workHours = ref(2);
-const overheadPercent = ref(15);
+const workHours = ref(4);
+const overheadPercent = ref(30);
 const finalSellingPricePerPiece = ref(0);
 const defaultProfitMargin = ref(50);
 
@@ -60,6 +60,15 @@ async function fetchData() {
 
 onMounted(async () => {
   await fetchData();
+  if (route.query.recipeId) {
+    const id = Number(route.query.recipeId);
+    const recipe = allRecipes.value.find((r) => r.id === id);
+    if (recipe) {
+      // ตั้งค่าทั้ง ID และชื่อที่แสดงผล
+      selectedItemId.value = `recipe-${id}`;
+      selectedItemName.value = `สูตร: ${recipe.name}`;
+    }
+  }
   if (route.query.productId) {
     const id = Number(route.query.productId);
     const product = allProducts.value.find((p) => p.id === id);
@@ -76,7 +85,7 @@ const selectionOptions = computed(() => {
       label: 'สินค้า',
       options: allProducts.value.map((p) => ({
         value: `product-${p.id}`,
-        label: `${p.name} (${p.weight}g)`,
+        label: `${p.name} (${p.weight}g) (${p.price}บาท)`, // Add prefix here
       })),
     },
     {
@@ -85,7 +94,7 @@ const selectionOptions = computed(() => {
         .filter((r) => !r.isSubRecipe)
         .map((r) => ({
           value: `recipe-${r.id}`,
-          label: r.name,
+          label: r.name, // Add prefix here
         })),
     },
   ];
@@ -95,6 +104,7 @@ watch(selectedItemId, (newValue) => {
   calculationResult.value = null;
   if (!newValue) {
     selectedItemInfo.value = null;
+    selectedItemName.value = '';
     return;
   }
   const [type, id] = newValue.split('-');
@@ -104,6 +114,7 @@ watch(selectedItemId, (newValue) => {
       selectedItemInfo.value = { type: 'product', data: product };
       weightPerPiece.value = product.weight;
       finalSellingPricePerPiece.value = product.price;
+      selectedItemName.value = `สินค้า: ${product.name}`;
     }
   } else {
     const recipe = allRecipes.value.find((r) => r.id === Number(id));
@@ -114,6 +125,7 @@ watch(selectedItemId, (newValue) => {
       //   0
       // );
       finalSellingPricePerPiece.value = 0;
+      selectedItemName.value = `สูตร: ${recipe.name}`;
     }
   }
 });
@@ -432,8 +444,12 @@ const profitPerPiece = computed(() => {
         class="mt-5 rounded-lg bg-white p-4 shadow-md"
       >
         <h2 class="mb-4 text-xl font-semibold">
-          ต้นทุนสูตร:
-          <span class="text-primary">{{ calculationResult.recipeName }}</span>
+          ต้นทุนสำหรับ
+          <span class="capitalize">{{
+            selectedItemInfo.type === 'product' ? 'สินค้า' : 'สูตร'
+          }}</span
+          >:
+          <span class="text-primary">{{ selectedItemInfo.data.name }}</span>
         </h2>
         <p class="mb-6 text-gray-600">
           สำหรับขนมจำนวน {{ productionQuantity }} ชิ้น, ขนาด

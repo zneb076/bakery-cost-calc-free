@@ -196,6 +196,7 @@ onMounted(fetchData);
                   >
                     <font-awesome-icon icon="calculator" size="lg" />
                   </router-link>
+
                   <button
                     @click="openEditModal(recipe)"
                     class="text-gray-500 transition-colors hover:text-secondary"

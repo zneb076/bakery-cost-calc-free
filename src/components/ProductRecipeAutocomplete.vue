@@ -63,8 +63,17 @@ function handleBlur() {
       @input="handleInput"
       @focus="showOptions = true"
       @blur="handleBlur"
-      class="w-full rounded-md border border-gray-300 px-3 py-2"
+      @keydown="handleKeydown"
+      class="w-full rounded-md border border-gray-300 px-3 py-2 pr-8"
     />
+    <button
+      v-if="modelValue"
+      @click="selectOption('')"
+      type="button"
+      class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+    >
+      &times;
+    </button>
     <ul
       v-if="showOptions && filteredOptions.length > 0"
       class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
