@@ -24,7 +24,8 @@ const resultsSection = ref(null);
 const isLoadingData = ref(true);
 
 const expandedProjectionIndex = ref(null);
-const loadedGroup = ref(null);
+const loadedGroupInfo = ref(null);
+const liveCalculatorSection = ref(null);
 
 // **NEW:** Add this computed property back in
 const projectionDetails = computed(() => {
@@ -72,7 +73,6 @@ const productOptions = computed(() => {
 });
 
 const liveProducts = ref([{ productId: null, salesMix: null }]);
-
 watch(
   liveProducts,
   (newValue) => {
@@ -96,17 +96,6 @@ function removeLiveProductRow(index) {
   liveProducts.value.splice(index, 1);
 }
 
-watch(
-  liveProducts,
-  () => {
-    calculationResult.value = null;
-    if (loadedGroupInfo.value) {
-      loadedGroupInfo.value = null; // Reset ถ้ามีการแก้ไข
-    }
-  },
-  { deep: true }
-);
-
 function loadGroupToLive(group) {
   liveProducts.value = JSON.parse(JSON.stringify(group.products));
   loadedGroupInfo.value = { id: group.id, name: group.name }; // บันทึกข้อมูลกลุ่ม
@@ -118,6 +107,15 @@ function loadGroupToLive(group) {
     showConfirmButton: false,
     timer: 2000,
   });
+  nextTick(() => {
+    liveCalculatorSection.value?.scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
+function clearLiveProducts() {
+  liveProducts.value = [{ productId: null, monthlySales: null }];
+  calculationResult.value = null;
+  loadedGroupInfo.value = null;
 }
 
 async function saveLiveGroup() {
@@ -442,7 +440,10 @@ async function deleteGroup(id, name) {
       <p>กำลังโหลดข้อมูล...</p>
     </div>
     <div v-else>
-      <div class="mb-6 rounded-lg bg-white p-6 shadow-md">
+      <div
+        ref="liveCalculatorSection"
+        class="mb-6 rounded-lg bg-white p-4 shadow-md"
+      >
         <h2 class="mb-4 text-2xl font-semibold">พื้นที่คำนวณ (Live)</h2>
         <div class="border-t pt-4">
           <div class="mb-4">
@@ -474,21 +475,21 @@ async function deleteGroup(id, name) {
                     class="mt-1"
                   />
                 </div>
-                <div class="w-32 flex-shrink-0">
+                <div class="w-24 flex-shrink-0">
                   <label class="block text-xs font-medium text-gray-600"
-                    >สัดส่วนการขาย</label
+                    >สัดส่วนการขาย (%)</label
                   >
                   <input
                     v-model.number="item.salesMix"
                     type="number"
                     placeholder="สัดส่วน"
-                    class="mt-1 w-full rounded-md border p-2"
+                    class="mt-1 w-24 rounded-md border p-2"
                   />
                 </div>
                 <button
                   @click="removeLiveProductRow(index)"
                   type="button"
-                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center text-red-500"
+                  class="flex h-5 w-5 flex-shrink-0 items-center justify-center py-5 text-red-500"
                 >
                   <font-awesome-icon icon="trash" />
                 </button>
@@ -505,6 +506,12 @@ async function deleteGroup(id, name) {
             </button>
           </div>
           <div class="mt-4 flex justify-end space-x-2 border-t pt-4">
+            <button
+              @click="clearLiveProducts"
+              class="rounded-lg bg-gray-300 px-4 py-2 font-bold text-gray-800"
+            >
+              clear
+            </button>
             <button
               @click="saveLiveGroup"
               class="rounded-lg border border-blue-500 px-4 py-2 text-blue-500 transition hover:bg-blue-500 hover:text-white"
@@ -586,7 +593,7 @@ async function deleteGroup(id, name) {
       >
         <div class="flex items-center justify-between">
           <h2 class="text-2xl font-semibold">
-            ผลการคำนวณสำหรับ:
+            ผลการคำนวณ:<br />
             <span class="text-primary">{{ calculationResult.groupName }}</span>
           </h2>
           <button

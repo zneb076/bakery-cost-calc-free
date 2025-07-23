@@ -60,7 +60,7 @@ function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <div class="p-6">
+    <div class="p-4">
       <h3 class="mb-4 text-2xl font-semibold">
         {{ group.id ? 'แก้ไขกลุ่ม' : 'สร้างกลุ่มสำหรับหาจุดคุ้มทุน' }}
       </h3>
@@ -93,21 +93,21 @@ function handleSubmit() {
                     class="mt-1"
                   />
                 </div>
-                <div class="w-32 flex-shrink-0">
+                <div class="w-20 flex-shrink-0">
                   <label class="block text-xs font-medium text-gray-600"
-                    >สัดส่วนการขาย</label
+                    >สัดส่วนการขาย (%)</label
                   >
                   <input
                     v-model.number="item.salesMix"
                     type="number"
                     placeholder="สัดส่วน"
-                    class="mt-1 w-full rounded-md border p-2"
+                    class="mt-1 w-20 rounded-md border p-2"
                   />
                 </div>
                 <button
                   @click="removeRow(index)"
                   type="button"
-                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center text-red-500"
+                  class="flex h-5 w-5 flex-shrink-0 items-center justify-center py-5 text-red-500"
                 >
                   <font-awesome-icon icon="trash" />
                 </button>

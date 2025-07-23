@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, nextTick, watch } from 'vue';
+import { ref, onMounted, computed, nextTick } from 'vue';
 import { db } from '../services/db.js';
 import BaseModal from '../components/BaseModal.vue';
 import OverheadAnalysisForm from '../components/forms/OverheadAnalysisForm.vue';
@@ -18,8 +18,10 @@ const calculationResult = ref(null);
 const isLoadingData = ref(true);
 const isGroupModalOpen = ref(false);
 const editingGroup = ref(null);
+const isStepsModalOpen = ref(false);
 const resultsSection = ref(null);
-const loadedGroupInfo = ref(null);
+const loadedGroup = ref(null);
+const liveCalculatorSection = ref(null);
 
 const liveProducts = ref([{ productId: null, monthlySales: null }]);
 const productOptions = computed(() =>
@@ -116,38 +118,52 @@ function removeLiveProductRow(index) {
   liveProducts.value.splice(index, 1);
 }
 
-watch(
-  liveProducts,
-  () => {
-    calculationResult.value = null;
-    if (loadedGroupInfo.value) {
-      loadedGroupInfo.value = null; // Reset ถ้ามีการแก้ไข
-    }
-  },
-  { deep: true }
-);
-
 function loadGroupToLive(group) {
   liveProducts.value = JSON.parse(JSON.stringify(group.products));
-  loadedGroupInfo.value = { id: group.id, name: group.name }; // บันทึกข้อมูลกลุ่ม
+  loadedGroup.value = group; // **NEW:** เก็บข้อมูลกลุ่มที่โหลดไว้ที่นี่
   Swal.fire({
     toast: true,
     position: 'top-end',
-    icon: 'success',
+    icon: 'info',
     title: `โหลดข้อมูลกลุ่ม "${group.name}" แล้ว`,
     showConfirmButton: false,
     timer: 2000,
   });
+  nextTick(() => {
+    liveCalculatorSection.value?.scrollIntoView({ behavior: 'smooth' });
+  });
+}
+
+function clearLiveProducts() {
+  liveProducts.value = [{ productId: null, monthlySales: null }];
+  calculationResult.value = null;
+  loadedGroup.value = null;
 }
 
 async function calculateFromLive() {
-  const groupNameToUse = loadedGroupInfo.value
-    ? loadedGroupInfo.value.name
-    : ' (คำนวณชั่วคราว)';
-  const tempGroup = { name: groupNameToUse, products: liveProducts.value };
-  await calculateOverhead(tempGroup);
-}
+  // **NEW:** ตรวจสอบว่ามีกลุ่มที่โหลดมาหรือไม่
+  if (loadedGroup.value) {
+    await calculateOverhead(loadedGroup.value);
+  } else {
+    // ถ้าไม่มี ให้สร้างกลุ่มชั่วคราวจาก liveProducts
+    const productsForCalc = liveProducts.value
+      .map((item) => {
+        const productInfo = allProducts.value.find(
+          (p) => p.id === item.productId
+        );
+        if (!productInfo || !item.monthlySales) return null;
+        return { ...item, ...productInfo };
+      })
+      .filter(Boolean);
 
+    if (productsForCalc.length === 0) {
+      Swal.fire('ข้อมูลไม่ครบถ้วน', 'กรุณาเลือกสินค้าและใส่ยอดขาย', 'warning');
+      return;
+    }
+    const tempGroup = { name: ' (คำนวณชั่วคราว)', products: productsForCalc };
+    await calculateOverhead(tempGroup);
+  }
+}
 async function calculateOverhead(group) {
   calculationResult.value = null;
   if (!group) return;
@@ -188,7 +204,11 @@ async function calculateOverhead(group) {
   }
 
   if (totalMonthlyVariableCost === 0) {
-    Swal.fire('คำนวณไม่ได้', 'ต้นทุนวัตถุดิบรวมของกลุ่มเป็นศูนย์', 'warning');
+    Swal.fire(
+      'คำนวณไม่ได้',
+      'ต้นทุนวัตถุดิบรวมของกลุ่มเป็นศูนย์ (อาจเกิดจากสูตรไม่มีวัตถุดิบ)',
+      'warning'
+    );
     return;
   }
 
@@ -203,10 +223,17 @@ async function calculateOverhead(group) {
       overheadPerUnit,
       trueCostPerUnit,
       productId: p.productId,
+      monthlySales: p.monthlySales,
+      costRatio,
+      monthlyVariableCost: p.monthlyVariableCost,
     };
   });
 
-  calculationResult.value = { groupNameToUse: group.name, results };
+  calculationResult.value = {
+    groupName: group.name,
+    results,
+    totalMonthlyVariableCost,
+  };
   await nextTick();
   resultsSection.value?.scrollIntoView({ behavior: 'smooth' });
 }
@@ -284,6 +311,57 @@ async function expandRecipe(recipe, scalingFactor = 1) {
 function getProductName(productId) {
   return allProducts.value.find((p) => p.id === productId)?.name || 'N/A';
 }
+
+async function saveLiveGroup() {
+  const { value: groupName } = await Swal.fire({
+    title: 'บันทึกกลุ่มวิเคราะห์',
+    input: 'text',
+    inputLabel: 'ชื่อกลุ่ม',
+    inputPlaceholder: 'ใส่ชื่อกลุ่มที่ต้องการบันทึก',
+    showCancelButton: true,
+    confirmButtonText: 'บันทึก',
+    cancelButtonText: 'ยกเลิก',
+    inputValidator: (value) => {
+      if (!value) {
+        return 'คุณต้องใส่ชื่อกลุ่ม!';
+      }
+    },
+  });
+
+  if (groupName) {
+    // **FIX:** Convert reactive array to plain array before filtering
+    const plainLiveProducts = JSON.parse(JSON.stringify(liveProducts.value));
+
+    const validProducts = plainLiveProducts.filter(
+      (p) => p.productId && p.monthlySales > 0
+    );
+
+    if (validProducts.length === 0) {
+      Swal.fire(
+        'เกิดข้อผิดพลาด',
+        'กรุณาเลือกสินค้าและใส่ยอดขายอย่างน้อย 1 รายการ',
+        'error'
+      );
+      return; // Stop execution
+    }
+
+    const newGroup = {
+      name: groupName,
+      products: validProducts,
+      groupType: 'overhead',
+    };
+    await db.analysisGroups.add(newGroup);
+    await fetchData(); // Refresh the saved groups list
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'บันทึกกลุ่มสำเร็จ',
+      showConfirmButton: false,
+      timer: 3000,
+    });
+  }
+}
 </script>
 
 <template>
@@ -294,7 +372,10 @@ function getProductName(productId) {
       <p>กำลังโหลดข้อมูล...</p>
     </div>
     <div v-else>
-      <div class="mb-4 rounded-lg bg-white p-4 shadow-md">
+      <div
+        ref="liveCalculatorSection"
+        class="mb-6 rounded-lg bg-white p-4 shadow-md"
+      >
         <h2 class="mb-4 text-2xl font-semibold">พื้นที่คำนวณ (Live)</h2>
         <div class="border-t pt-4">
           <div class="mb-4">
@@ -312,9 +393,9 @@ function getProductName(productId) {
             <div
               v-for="(item, index) in liveProducts"
               :key="index"
-              class="rounded-lg bg-gray-50 p-2"
+              class="rounded-lg bg-gray-50 p-3"
             >
-              <div class="flex items-end space-x-1">
+              <div class="flex items-end space-x-2">
                 <div class="flex-grow">
                   <label class="block text-xs font-medium text-gray-600"
                     >สินค้า</label
@@ -340,7 +421,7 @@ function getProductName(productId) {
                 <button
                   @click="removeLiveProductRow(index)"
                   type="button"
-                  class="flex h-5 w-5 flex-shrink-0 items-center justify-center py-5 text-red-500"
+                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center text-red-500"
                 >
                   <font-awesome-icon icon="trash" />
                 </button>
@@ -358,10 +439,16 @@ function getProductName(productId) {
           </div>
           <div class="mt-4 flex justify-end space-x-2 border-t pt-4">
             <button
+              @click="clearLiveProducts"
+              class="rounded-lg bg-gray-300 px-4 py-2 font-bold text-gray-800"
+            >
+              clear
+            </button>
+            <button
               @click="saveLiveGroup"
               class="rounded-lg border border-blue-500 px-4 py-2 text-blue-500 transition hover:bg-blue-500 hover:text-white"
             >
-              บันทึกเป็นกลุ่ม
+              บันทึกเป็นกลุ่มใหม่
             </button>
             <button
               @click="calculateFromLive"
@@ -376,12 +463,6 @@ function getProductName(productId) {
       <div class="rounded-lg bg-white p-6 shadow-md">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-2xl font-semibold">กลุ่มที่บันทึกไว้</h2>
-          <button
-            @click="openAddModal"
-            class="rounded-md bg-gray-200 px-4 py-2 text-sm hover:bg-gray-300"
-          >
-            + สร้างกลุ่มใหม่
-          </button>
         </div>
         <table class="min-w-full">
           <tbody>
@@ -434,14 +515,21 @@ function getProductName(productId) {
       <div
         ref="resultsSection"
         v-if="calculationResult"
-        class="mb-8 mt-6 rounded-lg bg-white p-6 shadow-md"
+        class="mb-8 mt-6 rounded-lg bg-white p-3 shadow-md"
       >
-        <h2 class="mb-4 text-2xl font-semibold">
-          ผลการคำนวณสำหรับกลุ่ม:
-          <span class="text-primary">{{
-            calculationResult.groupNameToUse
-          }}</span>
-        </h2>
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-2xl font-semibold">
+            ผลการคำนวณ:<br />
+            <span class="text-primary">{{ calculationResult.groupName }}</span>
+          </h2>
+          <button
+            @click="isStepsModalOpen = true"
+            class="text-blue-500 hover:text-blue-700"
+          >
+            <font-awesome-icon icon="circle-info" />
+            <span class="ml-1 text-sm">ดูขั้นตอนการคำนวณ</span>
+          </button>
+        </div>
         <table class="min-w-full border text-sm">
           <thead class="bg-gray-100">
             <tr>
@@ -458,13 +546,13 @@ function getProductName(productId) {
               class="border-b"
             >
               <td class="px-3 py-2">{{ p.name }}</td>
-              <td class="px-3 py-2 text-right font-mono">
+              <td class="px-3 py-2 text-right">
                 {{ p.variableCostPerUnit.toFixed(2) }}
               </td>
-              <td class="px-3 py-2 text-right font-mono text-orange-500">
+              <td class="px-3 py-2 text-right text-orange-500">
                 {{ p.overheadPerUnit.toFixed(2) }}
               </td>
-              <td class="px-3 py-2 text-right font-mono font-bold text-primary">
+              <td class="px-3 py-2 text-right font-bold text-primary">
                 {{ p.trueCostPerUnit.toFixed(2) }}
               </td>
             </tr>
@@ -479,6 +567,64 @@ function getProductName(productId) {
           @save="handleSave"
           @cancel="closeModal"
         />
+      </BaseModal>
+
+      <BaseModal
+        v-if="isStepsModalOpen"
+        @close="isStepsModalOpen = false"
+        size="large"
+      >
+        <div v-if="calculationResult" class="p-6">
+          <h3 class="mb-4 text-2xl font-semibold">ขั้นตอนการคำนวณต้นทุนแฝง</h3>
+          <div class="space-y-4 text-sm">
+            <div>
+              <p class="font-semibold">
+                1. หาต้นทุนวัตถุดิบรวมของแต่ละชนิด (ต่อเดือน)
+              </p>
+              <ul class="mt-1 list-inside list-disc pl-4">
+                <li v-for="p in calculationResult.results" :key="p.productId">
+                  {{ p.name }}: {{ p.variableCostPerUnit.toFixed(2) }} x
+                  {{ p.monthlySales }} ชิ้น =
+                  {{ p.monthlyVariableCost.toFixed(2) }} บาท
+                </li>
+              </ul>
+            </div>
+            <div>
+              <p class="font-semibold">2. หา "สัดส่วนต้นทุน" ของแต่ละชนิด</p>
+              <ul class="mt-1 list-inside list-disc pl-4">
+                <li v-for="p in calculationResult.results" :key="p.productId">
+                  {{ p.name }}: {{ p.monthlyVariableCost.toFixed(2) }} /
+                  {{ calculationResult.totalMonthlyVariableCost.toFixed(2) }} =
+                  {{ (p.costRatio * 100).toFixed(2) }}%
+                </li>
+              </ul>
+            </div>
+            <div>
+              <p class="font-semibold">
+                3. ปันส่วนต้นทุนคงที่ และหาต้นทุนแฝงต่อชิ้น
+              </p>
+              <ul class="mt-1 list-inside list-disc pl-4">
+                <li v-for="p in calculationResult.results" :key="p.productId">
+                  {{ p.name }}: ({{ Number(fixedCosts).toLocaleString() }} x
+                  {{ (p.costRatio * 100).toFixed(2) }}%) /
+                  {{ p.monthlySales }} ชิ้น =
+                  <span class="font-semibold">{{
+                    p.overheadPerUnit.toFixed(2)
+                  }}</span>
+                  บาท/ชิ้น
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="mt-6 text-right">
+            <button
+              @click="isStepsModalOpen = false"
+              class="rounded-md bg-primary px-4 py-2 text-white"
+            >
+              ปิด
+            </button>
+          </div>
+        </div>
       </BaseModal>
     </div>
   </div>
