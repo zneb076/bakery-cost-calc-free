@@ -10,6 +10,7 @@ export default {
         'mali-h1': ['1.9rem', { lineHeight: '2.3rem' }], // Custom size for h1
         'mali-sm': ['0.9rem', { lineHeight: '1.2rem' }], // Custom smaller size
         'mali-xs': ['0.75rem', { lineHeight: '1rem' }],
+        'mali-3xl': ['1.5rem', { lineHeight: '2rem' }],
       },
       colors: {
         primary: '#ff7081',

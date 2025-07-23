@@ -49,4 +49,8 @@ input[type='number'] {
   body.font-mali .text-xs {
     @apply text-mali-xs; /* เรียกใช้คลาสที่เราสร้างใน tailwind.config.js */
   }
+
+  body.font-mali .text-3xl {
+    @apply text-mali-3xl; /* เรียกใช้คลาสที่เราสร้างใน tailwind.config.js */
+  }
 }

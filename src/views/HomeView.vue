@@ -1,15 +1,16 @@
 <template>
-  <div class="rounded-lg bg-white p-6 shadow-md md:p-8">
+  <div class="rounded-t-lg bg-white p-6 pb-1 shadow-md md:p-8">
     <h1 class="mb-4 text-3xl font-bold text-primary md:text-4xl">
       ยินดีต้อนรับสู่ "ขออีกคำ" Bakery Cost Calculator
     </h1>
     <img src="/logo.png" alt="ขออีกคำ Logo" class="mx-auto mb-4 h-32 w-32" />
-    <p class="mb-6 text-lg text-gray-700">
+    <p class="text-lg text-gray-700">
       แอปพลิเคชันที่จะมาเป็นผู้ช่วยคนสำคัญของคุณในการคำนวณต้นทุนเบเกอรี่
       ช่วยให้คุณสามารถวางแผนการผลิต, กำหนดราคาขาย,
       และมองเห็นกำไรได้อย่างแม่นยำและง่ายดาย
     </p>
-
+  </div>
+  <div class="rounded-b-lg bg-white p-4 shadow-md md:p-6">
     <div
       class="mx-auto mb-6 max-w-2xl rounded-md border border-yellow-300 bg-yellow-100 p-2 text-sm text-yellow-800"
     >

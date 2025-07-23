@@ -119,7 +119,7 @@ function handleSubmit() {
             :disabled="isEditing"
             :creatable="true"
             :show-all-on-focus="false"
-            placeholder="พิมพ์เพื่อค้นหาหรือเพิ่มใหม่"
+            placeholder="ชื่อวัตถุดิบ"
             @selection-made="focusNext('price-input')"
             class="mt-1"
           ></CustomAutocomplete>

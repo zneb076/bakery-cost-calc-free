@@ -142,8 +142,8 @@ function getRecipeName(recipeId) {
       </div>
     </div>
 
-    <div class="overflow-hidden rounded-lg bg-white shadow-md">
-      <table class="min-w-full">
+    <div class="overflow-hidden rounded-lg bg-white shadow-sm">
+      <table class="mb-[100px] min-w-full">
         <thead class="bg-gray-100">
           <tr>
             <th class="w-full px-4 py-2 text-left">ชื่อสินค้า</th>
@@ -159,15 +159,13 @@ function getRecipeName(recipeId) {
         </tbody>
         <tbody v-else>
           <template v-for="product in filteredProducts" :key="product.id">
-            <tr
-              class="cursor-pointer border-b hover:bg-gray-50"
-              @click="toggleRow(product.id)"
-            >
+            <tr class="border-b hover:bg-gray-50">
               <td class="px-4 py-3">{{ product.name }}</td>
               <td class="px-4 py-3">
                 <div class="flex items-center justify-center space-x-3">
                   <button
                     class="text-gray-500 transition-colors hover:text-green-600"
+                    @click="toggleRow(product.id)"
                   >
                     <font-awesome-icon icon="eye" />
                   </button>

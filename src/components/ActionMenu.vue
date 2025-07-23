@@ -14,7 +14,7 @@ const isOpen = ref(false);
     </button>
     <div
       v-if="isOpen"
-      class="absolute right-0 z-10 mt-2 w-40 rounded-md bg-white shadow-lg"
+      class="absolute right-0 z-40 mt-2 w-[200px] rounded-md bg-white shadow-lg"
       @mouseleave="isOpen = false"
     >
       <slot></slot>

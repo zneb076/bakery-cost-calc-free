@@ -7,7 +7,7 @@
         :to="{ name: 'CalculatorOverhead' }"
         class="block rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
       >
-        <div class="flex items-center space-x-4 py-6">
+        <div class="flex items-center space-x-4 py-4">
           <font-awesome-icon
             icon="calculator"
             class="text-3xl text-secondary"
@@ -17,10 +17,10 @@
             <p class="mt-2 text-sm text-gray-500">
               หาต้นทุนแฝงต่อชิ้นจากยอดขายและต้นทุนคงที่
             </p>
-            <p class="mt-2 text-xs text-red-700">
+            <!-- <p class="mt-2 text-xs text-red-700">
               * ต้องรู้ยอดขายต่อเดือนและต้นทุนคงที่ (ค่าเช่า, ค่าน้ำ, ค่าไฟ,
               อื่นๆ) เพื่อใช้ในการคำนวน *
-            </p>
+            </p> -->
           </div>
         </div>
       </router-link>
@@ -29,7 +29,7 @@
         :to="{ name: 'CalculatorBreakEven' }"
         class="block rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
       >
-        <div class="flex items-center space-x-4 py-6">
+        <div class="flex items-center space-x-4 py-4">
           <font-awesome-icon icon="chart-pie" class="text-3xl text-secondary" />
           <div>
             <h2 class="text-xl font-semibold">หาจุดคุ้มทุน</h2>

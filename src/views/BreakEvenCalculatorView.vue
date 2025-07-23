@@ -434,8 +434,6 @@ async function deleteGroup(id, name) {
 
 <template>
   <div>
-    <h1 class="mb-6 text-3xl font-bold">คำนวณหาจุดคุ้มทุน</h1>
-
     <div v-if="isLoadingData" class="py-10 text-center">
       <p>กำลังโหลดข้อมูล...</p>
     </div>
@@ -444,7 +442,7 @@ async function deleteGroup(id, name) {
         ref="liveCalculatorSection"
         class="mb-6 rounded-lg bg-white p-4 shadow-md"
       >
-        <h2 class="mb-4 text-2xl font-semibold">พื้นที่คำนวณ (Live)</h2>
+        <h1 class="mb-6 text-3xl font-bold">คำนวณหาจุดคุ้มทุน</h1>
         <div class="border-t pt-4">
           <div class="mb-4">
             <label class="block text-sm font-medium"
@@ -811,3 +809,9 @@ async function deleteGroup(id, name) {
     </div>
   </div>
 </template>
+
+<style>
+.multiselect-dropdown {
+  min-width: 300px; /* Adjust the width as needed */
+}
+</style>

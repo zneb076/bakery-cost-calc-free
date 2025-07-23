@@ -7,6 +7,7 @@ import RecipeForm from '../components/forms/RecipeForm.vue';
 import RecipeQuickViewModal from '../components/RecipeQuickViewModal.vue';
 import ProductForm from '../components/forms/ProductForm.vue';
 import ActionMenu from '../components/ActionMenu.vue';
+import { useAppMode } from '../composables/useAppMode.js';
 
 const recipes = ref([]);
 const availableIngredients = ref([]);
@@ -18,6 +19,9 @@ const isQuickViewModalOpen = ref(false);
 const recipeForQuickView = ref(null);
 const isProductModalOpen = ref(false); // 2. State ใหม่
 const newProductFromRecipe = ref(null); // 2. State ใหม่
+const { currentMode } = useAppMode();
+
+const isAdvanceMode = computed(() => currentMode.value === 'advance');
 
 // Computed property to filter recipes based on search query
 const filteredRecipes = computed(() => {
@@ -181,7 +185,7 @@ async function handleProductSave(productData) {
 
 <template>
   <div>
-    <div class="rounded-lg bg-white p-3 shadow-md">
+    <div class="rounded-lg bg-white p-3 pb-8 shadow-md">
       <div class="overflow-x-auto">
         <div class="mb-6 flex items-center justify-between">
           <h1 class="text-2xl font-bold">จัดการสูตรขนม</h1>
@@ -208,7 +212,7 @@ async function handleProductSave(productData) {
             <font-awesome-icon icon="xmark" />
           </button>
         </div>
-        <table class="min-w-full bg-white">
+        <table class="mb-[120px] min-w-full bg-white">
           <thead class="bg-gray-100">
             <tr>
               <th class="px-4 py-2 text-left">ชื่อสูตร</th>
@@ -228,23 +232,16 @@ async function handleProductSave(productData) {
             >
               <td class="px-2 py-2">
                 {{ recipe.name }}
-                <span
-                  v-if="recipe.isSubRecipe"
-                  class="rounded-full bg-secondary px-2 py-0.5 text-xs text-white"
-                >
-                  สูตรย่อย
-                </span>
+                <div v-if="recipe.isSubRecipe">
+                  <span
+                    class="rounded-full bg-secondary px-2 py-0.5 text-xs text-white"
+                  >
+                    สูตรย่อย
+                  </span>
+                </div>
               </td>
               <td class="w-24 py-3 text-right">
                 <div class="flex items-center justify-end space-x-3">
-                  <button
-                    v-if="!recipe.isSubRecipe"
-                    @click.stop="openQuickAddProductModal(recipe)"
-                    class="text-gray-500 hover:text-green-600"
-                    title="สร้างสินค้าจากสูตรนี้"
-                  >
-                    <font-awesome-icon icon="plus" />
-                  </button>
                   <button
                     @click="openQuickViewModal(recipe)"
                     class="text-gray-500 transition-colors hover:text-green-600"
@@ -262,6 +259,13 @@ async function handleProductSave(productData) {
 
                   <ActionMenu>
                     <div class="py-1">
+                      <button
+                        v-if="!recipe.isSubRecipe && isAdvanceMode"
+                        @click.stop="openQuickAddProductModal(recipe)"
+                        class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        สร้างสินค้าจากสูตรนี้
+                      </button>
                       <button
                         @click.stop="openEditModal(recipe)"
                         class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"

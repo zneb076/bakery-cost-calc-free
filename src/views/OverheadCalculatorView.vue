@@ -366,8 +366,6 @@ async function saveLiveGroup() {
 
 <template>
   <div>
-    <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุนแฝงต่อชิ้น</h1>
-
     <div v-if="isLoadingData" class="py-10 text-center">
       <p>กำลังโหลดข้อมูล...</p>
     </div>
@@ -376,7 +374,7 @@ async function saveLiveGroup() {
         ref="liveCalculatorSection"
         class="mb-6 rounded-lg bg-white p-4 shadow-md"
       >
-        <h2 class="mb-4 text-2xl font-semibold">พื้นที่คำนวณ (Live)</h2>
+        <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุนแฝงต่อชิ้น</h1>
         <div class="border-t pt-4">
           <div class="mb-4">
             <label class="block text-sm font-medium"
@@ -404,7 +402,6 @@ async function saveLiveGroup() {
                     v-model="item.productId"
                     :options="productOptions"
                     placeholder="เลือกสินค้า"
-                    class="mt-1"
                   />
                 </div>
                 <div class="w-16 flex-shrink-0">
@@ -534,9 +531,9 @@ async function saveLiveGroup() {
           <thead class="bg-gray-100">
             <tr>
               <th class="px-3 py-2 text-left">ชื่อสินค้า</th>
-              <th class="px-3 py-2 text-right">ต้นทุนวัตถุดิบ/ชิ้น</th>
-              <th class="px-3 py-2 text-right">ต้นทุนแฝง/ชิ้น</th>
-              <th class="px-3 py-2 text-right">ต้นทุนจริง/ชิ้น</th>
+              <th class="w-12 px-3 py-2 text-right">ต้นทุนวัตถุดิบ/ชิ้น</th>
+              <th class="w-12 px-3 py-2 text-right">ต้นทุนแฝง/ชิ้น</th>
+              <th class="w-12 px-3 py-2 text-right">ต้นทุนจริง/ชิ้น</th>
             </tr>
           </thead>
           <tbody>
@@ -629,3 +626,9 @@ async function saveLiveGroup() {
     </div>
   </div>
 </template>
+
+<style>
+.multiselect-dropdown {
+  min-width: 300px; /* Adjust the width as needed */
+}
+</style>
