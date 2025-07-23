@@ -8,7 +8,6 @@ import BreakEvenAnalysisForm from '../components/forms/BreakEvenAnalysisForm.vue
 
 const GROUP_TYPE = 'breakeven';
 
-// --- State Refs ---
 const analysisGroups = ref([]);
 const allProducts = ref([]);
 const allRecipes = ref([]);
@@ -20,24 +19,29 @@ const calculationResult = ref(null);
 const isGroupModalOpen = ref(false);
 const editingGroup = ref(null);
 const isStepsModalOpen = ref(false);
-const expandedProjectionIndex = ref(null);
+
 const resultsSection = ref(null);
 const isLoadingData = ref(true);
 
-// Live calculator state
-const liveItems = ref([
-  {
-    selectedValue: null,
-    type: null,
-    recipeId: null,
-    name: '',
-    salesMix: null,
-    price: null,
-    weight: null,
-  },
-]);
+const expandedProjectionIndex = ref(null);
+const loadedGroup = ref(null);
 
-// --- Data Fetching ---
+// **NEW:** Add this computed property back in
+const projectionDetails = computed(() => {
+  if (expandedProjectionIndex.value === null || !calculationResult.value)
+    return [];
+
+  const projection =
+    calculationResult.value.projections[expandedProjectionIndex.value];
+  if (!projection) return [];
+
+  return calculationResult.value.productDetails.map((p) => {
+    const units =
+      projection.units * (p.salesMix / calculationResult.value.totalMixRatio);
+    return { name: p.name, units: Math.ceil(units) };
+  });
+});
+
 async function fetchData() {
   try {
     isLoadingData.value = true;
@@ -60,115 +64,56 @@ async function fetchData() {
 }
 onMounted(fetchData);
 
-// --- Computed Properties ---
-const liveOptions = computed(() => {
-  return [
-    {
-      label: 'สินค้า',
-      options: allProducts.value.map((p) => ({
-        value: `product-${p.id}`,
-        label: p.name,
-        price: p.price,
-        weight: p.weight,
-        recipeId: p.recipeId,
-        type: 'product',
-      })),
-    },
-    {
-      label: 'สูตร (คำนวณสด)',
-      options: allRecipes.value
-        .filter((r) => !r.isSubRecipe)
-        .map((r) => ({
-          value: `recipe-${r.id}`,
-          label: r.name,
-          recipeId: r.id,
-          type: 'recipe',
-        })),
-    },
-  ];
+const productOptions = computed(() => {
+  return allProducts.value.map((p) => ({
+    value: p.id,
+    label: `${p.name} (${p.price} บาท)`,
+  }));
 });
 
-const projectionDetails = computed(() => {
-  if (expandedProjectionIndex.value === null || !calculationResult.value)
-    return [];
-  const projection =
-    calculationResult.value.projections[expandedProjectionIndex.value];
-  if (!projection) return [];
-  return calculationResult.value.productDetails.map((p) => {
-    const units =
-      projection.units * (p.salesMix / calculationResult.value.totalMixRatio);
-    return { name: p.name, units: Math.ceil(units) };
-  });
-});
+const liveProducts = ref([{ productId: null, salesMix: null }]);
 
-// --- Watchers ---
 watch(
-  liveItems,
-  () => {
+  liveProducts,
+  (newValue) => {
     calculationResult.value = null;
+    newValue.forEach((item) => {
+      if (item.productId && !item.price) {
+        const product = allProducts.value.find((p) => p.id === item.productId);
+        if (product) {
+          item.price = product.price;
+        }
+      }
+    });
   },
   { deep: true }
 );
 
-// --- Functions ---
-function handleLiveItemSelect(item, value) {
-  const selectedOption = liveOptions.value
-    .flatMap((group) => group.options)
-    .find((opt) => opt.value === value);
-  if (selectedOption) {
-    item.type = selectedOption.type;
-    item.recipeId = selectedOption.recipeId;
-    item.name = selectedOption.label;
-    item.selectedValue = value;
-    if (selectedOption.type === 'product') {
-      item.price = selectedOption.price;
-      item.weight = selectedOption.weight;
-    } else {
-      item.price = null;
-      item.weight = null;
+function addLiveProductRow() {
+  liveProducts.value.push({ productId: null, salesMix: null, price: null });
+}
+function removeLiveProductRow(index) {
+  liveProducts.value.splice(index, 1);
+}
+
+watch(
+  liveProducts,
+  () => {
+    calculationResult.value = null;
+    if (loadedGroupInfo.value) {
+      loadedGroupInfo.value = null; // Reset ถ้ามีการแก้ไข
     }
-  }
-}
-
-function addLiveRow() {
-  liveItems.value.push({
-    selectedValue: null,
-    type: null,
-    recipeId: null,
-    name: '',
-    salesMix: null,
-    price: null,
-    weight: null,
-  });
-}
-
-function removeLiveRow(index) {
-  liveItems.value.splice(index, 1);
-}
+  },
+  { deep: true }
+);
 
 function loadGroupToLive(group) {
-  const loadedItems = group.products
-    .map((p) => {
-      const productInfo = allProducts.value.find(
-        (prod) => prod.id === p.productId
-      );
-      if (!productInfo) return null;
-      return {
-        selectedValue: `product-${p.productId}`,
-        type: 'product',
-        name: productInfo.name,
-        recipeId: productInfo.recipeId,
-        salesMix: p.salesMix,
-        price: productInfo.price,
-        weight: productInfo.weight,
-      };
-    })
-    .filter(Boolean);
-  liveItems.value = loadedItems;
+  liveProducts.value = JSON.parse(JSON.stringify(group.products));
+  loadedGroupInfo.value = { id: group.id, name: group.name }; // บันทึกข้อมูลกลุ่ม
   Swal.fire({
     toast: true,
     position: 'top-end',
-    icon: 'info',
+    icon: 'success',
     title: `โหลดข้อมูลกลุ่ม "${group.name}" แล้ว`,
     showConfirmButton: false,
     timer: 2000,
@@ -187,12 +132,12 @@ async function saveLiveGroup() {
   });
 
   if (groupName) {
-    const validProducts = liveItems.value
-      .filter((p) => p.type === 'product' && p.selectedValue && p.salesMix > 0)
-      .map((p) => ({
-        productId: Number(p.selectedValue.split('-')[1]),
-        salesMix: p.salesMix,
-      }));
+    // **FIX:** Convert reactive array to plain array before filtering
+    const plainLiveProducts = JSON.parse(JSON.stringify(liveProducts.value));
+
+    const validProducts = plainLiveProducts.filter(
+      (p) => p.productId && p.salesMix > 0
+    );
 
     if (validProducts.length > 0) {
       const newGroup = {
@@ -213,45 +158,56 @@ async function saveLiveGroup() {
     } else {
       Swal.fire(
         'เกิดข้อผิดพลาด',
-        'ต้องมี "สินค้า" ที่มีสัดส่วนการขายถูกต้องอย่างน้อย 1 รายการเพื่อบันทึกกลุ่ม',
+        'กรุณาเลือกสินค้าและใส่สัดส่วนการขาย',
         'error'
       );
     }
   }
 }
-
 async function calculateFromLive() {
-  const itemsForCalc = liveItems.value
+  const groupNameToUse = loadedGroupInfo.value
+    ? loadedGroupInfo.value.name
+    : ' (คำนวณชั่วคราว)';
+
+  const productsForCalc = liveProducts.value
     .map((item) => {
-      if (!item.selectedValue || !item.salesMix) return null;
-      if (item.type === 'recipe' && (!item.price || !item.weight)) return null;
-      return item;
+      const productInfo = allProducts.value.find(
+        (p) => p.id === item.productId
+      );
+      if (!productInfo || !item.salesMix) return null;
+      return { ...productInfo, salesMix: item.salesMix };
     })
     .filter(Boolean);
-
-  if (
-    itemsForCalc.length === 0 ||
-    itemsForCalc.length !==
-      liveItems.value.filter((i) => i.selectedValue).length
-  ) {
+  if (productsForCalc.length === 0) {
     Swal.fire(
       'ข้อมูลไม่ครบถ้วน',
-      'กรุณากรอกข้อมูลในพื้นที่คำนวณให้ครบทุกช่อง',
+      'กรุณาเลือกสินค้าและใส่สัดส่วนการขาย',
       'warning'
     );
     return;
   }
-
-  const tempGroup = { name: ' (คำนวณชั่วคราว)', items: itemsForCalc };
+  const tempGroup = { name: groupNameToUse, products: productsForCalc };
   await calculateBreakEven(tempGroup);
-
   await nextTick();
   resultsSection.value?.scrollIntoView({ behavior: 'smooth' });
 }
 
 async function calculateBreakEven(group) {
   calculationResult.value = null;
-  if (!group) {
+  if (!group || !group.products) return;
+
+  const productsForCalc = group.products
+    .map((p) => {
+      const info = allProducts.value.find((prod) => prod.id === p.productId);
+      return { ...info, ...p };
+    })
+    .filter((p) => p.id && p.salesMix && p.price);
+  if (productsForCalc.length === 0) {
+    Swal.fire(
+      'ข้อมูลไม่ครบถ้วน',
+      'กรุณาเลือกสินค้า, ใส่สัดส่วน และราคาขายให้ครบ',
+      'warning'
+    );
     return;
   }
 
@@ -259,34 +215,32 @@ async function calculateBreakEven(group) {
   let totalWeightedCm = 0;
   let totalWeightedPrice = 0;
   const productDetails = [];
-
-  for (const item of group.items) {
-    const recipe = allRecipes.value.find((r) => r.id === item.recipeId);
-    if (!recipe || !item.price || !item.salesMix || !item.weight) continue;
-
+  for (const product of productsForCalc) {
+    const recipe = allRecipes.value.find((r) => r.id === product.recipeId);
+    if (!recipe) continue;
     const flatIngredients = await expandRecipe(recipe, 1);
     const totalRecipeWeight =
       recipe.ingredientsList.reduce(
-        (sum, ing) => sum + Number(ing.quantity || 0),
+        (sum, item) => sum + Number(item.quantity || 0),
         0
       ) || 1;
-    const variableCostPerGram =
+    const costPerGram =
       flatIngredients.reduce((sum, ing) => sum + ing.totalCost, 0) /
       totalRecipeWeight;
-    const variableCost = variableCostPerGram * Number(item.weight);
-
-    const sellingPrice = Number(item.price);
+    const variableCost = costPerGram * Number(product.weight);
+    const sellingPrice = Number(product.price);
     const contributionMargin = sellingPrice - variableCost;
-    const mixRatio = Number(item.salesMix);
-
+    const mixRatio = Number(product.salesMix);
     totalMixRatio += mixRatio;
     totalWeightedCm += contributionMargin * mixRatio;
     totalWeightedPrice += sellingPrice * mixRatio;
     productDetails.push({
-      ...item,
+      name: product.name,
       variableCost,
       sellingPrice,
       contributionMargin,
+      salesMix: mixRatio,
+      productId: product.id,
     });
   }
 
@@ -304,12 +258,10 @@ async function calculateBreakEven(group) {
   const breakEvenPointTotalUnits =
     Number(fixedCosts.value || 0) / weightedAverageCm;
   const breakEvenPointRevenue = breakEvenPointTotalUnits * weightedAveragePrice;
-
   const breakEvenUnitsByProduct = productDetails.map((p) => {
     const units = breakEvenPointTotalUnits * (p.salesMix / totalMixRatio);
     return { name: p.name, units: Math.ceil(units) };
   });
-
   const projections = [];
   const baseUnits = Math.ceil(breakEvenPointTotalUnits);
   for (let i = 0; i <= 5; i++) {
@@ -334,6 +286,9 @@ async function calculateBreakEven(group) {
     breakEvenUnitsByProduct,
     projections,
   };
+
+  await nextTick();
+  resultsSection.value?.scrollIntoView({ behavior: 'smooth' });
 }
 
 async function expandRecipe(recipe, scalingFactor) {
@@ -418,17 +373,64 @@ function toggleProjectionDetails(index) {
   }
 }
 
-function openAddModalGroup() {
+// **FIX:** Renamed functions for consistency
+function openAddGroupModal() {
   editingGroup.value = {
     name: '',
     products: [{ productId: null, salesMix: null }],
   };
   isGroupModalOpen.value = true;
 }
-
-function openEditModalGroup(group) {
+function openEditGroupModal(group) {
   editingGroup.value = { ...JSON.parse(JSON.stringify(group)) };
   isGroupModalOpen.value = true;
+}
+function closeGroupModal() {
+  isGroupModalOpen.value = false;
+  editingGroup.value = null;
+}
+async function handleGroupSave(groupData) {
+  const plainData = {
+    ...JSON.parse(JSON.stringify(groupData)),
+    groupType: GROUP_TYPE,
+  };
+  if (plainData.id) {
+    await db.analysisGroups.update(plainData.id, plainData);
+  } else {
+    await db.analysisGroups.add(plainData);
+  }
+  closeGroupModal();
+  await fetchData();
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title: 'บันทึกกลุ่มสำเร็จ',
+    showConfirmButton: false,
+    timer: 3000,
+  });
+}
+async function deleteGroup(id, name) {
+  const result = await Swal.fire({
+    title: `ลบกลุ่ม "${name}"?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    confirmButtonText: 'ใช่, ลบเลย',
+    cancelButtonText: 'ยกเลิก',
+  });
+  if (result.isConfirmed) {
+    await db.analysisGroups.delete(id);
+    await fetchData();
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'ลบสำเร็จ',
+      showConfirmButton: false,
+      timer: 3000,
+    });
+  }
 }
 </script>
 
@@ -453,35 +455,29 @@ function openEditModalGroup(group) {
               class="mt-1 w-full rounded-md border p-2 md:w-1/2"
             />
           </div>
-
-          <h4 class="mb-2 font-semibold">รายการ</h4>
+          <h4 class="mb-2 font-semibold">รายการสินค้า</h4>
           <div class="space-y-3">
             <div
-              v-for="(item, index) in liveItems"
+              v-for="(item, index) in liveProducts"
               :key="index"
               class="rounded-lg bg-gray-50 p-3"
             >
-              <div class="flex items-center space-x-2">
-                <Multiselect
-                  :model-value="item.selectedValue"
-                  @update:model-value="
-                    (value) => handleLiveItemSelect(item, value)
-                  "
-                  :options="liveOptions"
-                  placeholder="เลือกสินค้าหรือสูตร"
-                  class="flex-grow"
-                />
-                <button
-                  @click="removeLiveRow(index)"
-                  type="button"
-                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center text-red-500"
-                >
-                  <font-awesome-icon icon="trash" />
-                </button>
-              </div>
-              <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
-                <div>
-                  <label class="text-xs text-gray-500">สัดส่วนขาย</label>
+              <div class="flex items-end space-x-2">
+                <div class="flex-grow">
+                  <label class="block text-xs font-medium text-gray-600"
+                    >สินค้า</label
+                  >
+                  <Multiselect
+                    v-model="item.productId"
+                    :options="productOptions"
+                    placeholder="เลือกสินค้า"
+                    class="mt-1"
+                  />
+                </div>
+                <div class="w-32 flex-shrink-0">
+                  <label class="block text-xs font-medium text-gray-600"
+                    >สัดส่วนการขาย</label
+                  >
                   <input
                     v-model.number="item.salesMix"
                     type="number"
@@ -489,50 +485,35 @@ function openEditModalGroup(group) {
                     class="mt-1 w-full rounded-md border p-2"
                   />
                 </div>
-                <div>
-                  <label class="text-xs text-gray-500">ราคาขาย (บาท)</label>
-                  <input
-                    v-model.number="item.price"
-                    :disabled="item.type === 'product'"
-                    type="number"
-                    placeholder="ราคา"
-                    class="mt-1 w-full rounded-md border p-2 disabled:bg-gray-200"
-                  />
-                </div>
-                <div>
-                  <label class="text-xs text-gray-500">น้ำหนัก (g)</label>
-                  <input
-                    v-model.number="item.weight"
-                    :disabled="item.type === 'product'"
-                    type="number"
-                    placeholder="กรัม"
-                    class="mt-1 w-full rounded-md border p-2 disabled:bg-gray-200"
-                  />
-                </div>
+                <button
+                  @click="removeLiveProductRow(index)"
+                  type="button"
+                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center text-red-500"
+                >
+                  <font-awesome-icon icon="trash" />
+                </button>
               </div>
             </div>
           </div>
-
           <div class="mt-4 flex items-center space-x-4">
             <button
-              @click="addLiveRow"
+              @click="addLiveProductRow"
               type="button"
               class="font-semibold text-primary"
             >
-              + เพิ่มรายการ
+              + เพิ่มสินค้า
             </button>
           </div>
-
           <div class="mt-4 flex justify-end space-x-2 border-t pt-4">
             <button
               @click="saveLiveGroup"
-              class="rounded-lg bg-secondary px-4 py-2 font-bold text-white"
+              class="rounded-lg border border-blue-500 px-4 py-2 text-blue-500 transition hover:bg-blue-500 hover:text-white"
             >
-              บันทึกเป็นกลุ่ม
+              บันทึกเป็นกลุ่มใหม่
             </button>
             <button
               @click="calculateFromLive"
-              class="rounded-lg bg-primary px-4 py-2 font-bold text-white"
+              class="rounded-lg bg-primary px-4 py-2 text-white"
             >
               คำนวณ
             </button>
@@ -543,6 +524,12 @@ function openEditModalGroup(group) {
       <div class="rounded-lg bg-white p-6 shadow-md">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-2xl font-semibold">กลุ่มที่บันทึกไว้</h2>
+          <button
+            @click="openAddGroupModal"
+            class="rounded-md bg-gray-200 px-4 py-2 text-sm hover:bg-gray-300"
+          >
+            + สร้างกลุ่มใหม่
+          </button>
         </div>
         <table class="min-w-full">
           <tbody>
@@ -575,7 +562,7 @@ function openEditModalGroup(group) {
                   โหลด
                 </button>
                 <button
-                  @click="openEditModalGroup(group)"
+                  @click="openEditGroupModal(group)"
                   class="text-gray-500 hover:text-secondary"
                 >
                   <font-awesome-icon icon="pencil" />
@@ -615,7 +602,7 @@ function openEditModalGroup(group) {
           <table class="min-w-full border text-sm">
             <thead class="bg-gray-100">
               <tr>
-                <th class="px-3 py-2 text-left">สินค้า/สูตร</th>
+                <th class="px-3 py-2 text-left">สินค้า</th>
                 <th class="px-3 py-2 text-right">ราคาขาย</th>
                 <th class="px-3 py-2 text-right">ต้นทุนผันแปร</th>
                 <th class="px-3 py-2 text-right">กำไรส่วนเกิน</th>
@@ -624,24 +611,23 @@ function openEditModalGroup(group) {
             <tbody>
               <tr
                 v-for="p in calculationResult.productDetails"
-                :key="p.name"
+                :key="p.productId"
                 class="border-b"
               >
                 <td class="px-3 py-2">{{ p.name }}</td>
-                <td class="px-3 py-2 text-right font-mono">
+                <td class="px-3 py-2 text-right">
                   {{ p.sellingPrice.toFixed(2) }}
                 </td>
-                <td class="px-3 py-2 text-right font-mono text-red-500">
+                <td class="px-3 py-2 text-right text-red-500">
                   {{ p.variableCost.toFixed(2) }}
                 </td>
-                <td class="px-3 py-2 text-right font-mono text-green-600">
+                <td class="px-3 py-2 text-right text-green-600">
                   {{ p.contributionMargin.toFixed(2) }}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-
         <div class="grid grid-cols-1 gap-4 text-center md:grid-cols-2">
           <div class="rounded-lg bg-green-100 p-4">
             <p class="text-sm text-gray-600">ต้องขายทั้งหมด</p>
@@ -663,7 +649,6 @@ function openEditModalGroup(group) {
             <p class="text-sm text-gray-600">บาท ถึงจะคุ้มทุน</p>
           </div>
         </div>
-
         <h3 class="mb-2 font-semibold">จำนวนที่ต้องขาย (โดยประมาณ)</h3>
         <ul class="list-inside list-disc">
           <li
@@ -673,7 +658,6 @@ function openEditModalGroup(group) {
             {{ product.name }}: {{ product.units.toLocaleString() }} ชิ้น
           </li>
         </ul>
-
         <h3 class="mb-2 font-semibold">ตารางคาดการณ์กำไร</h3>
         <table class="min-w-full border">
           <thead class="bg-gray-100">
@@ -692,10 +676,10 @@ function openEditModalGroup(group) {
                 @click="toggleProjectionDetails(index)"
                 class="cursor-pointer border-b hover:bg-gray-100"
               >
-                <td class="px-4 py-2 text-right font-mono">
+                <td class="px-4 py-2 text-right">
                   {{ proj.units.toLocaleString() }}
                 </td>
-                <td class="px-4 py-2 text-right font-mono">
+                <td class="px-4 py-2 text-right">
                   {{
                     proj.revenue.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
@@ -704,7 +688,7 @@ function openEditModalGroup(group) {
                   }}
                 </td>
                 <td
-                  class="px-4 py-2 text-right font-mono"
+                  class="px-4 py-2 text-right"
                   :class="proj.profit < 0 ? 'text-red-500' : 'text-green-600'"
                 >
                   {{
@@ -776,7 +760,7 @@ function openEditModalGroup(group) {
               </p>
               <p class="mt-1">
                 คำนวณได้:
-                <span class="font-mono font-semibold">{{
+                <span class="font-semibold">{{
                   calculationResult.weightedAverageCm.toFixed(2)
                 }}</span>
                 บาท/หน่วย
@@ -787,7 +771,7 @@ function openEditModalGroup(group) {
               <p class="mt-1">
                 {{ Number(fixedCosts).toLocaleString() }} /
                 {{ calculationResult.weightedAverageCm.toFixed(2) }} =
-                <span class="font-mono font-semibold">{{
+                <span class="font-semibold">{{
                   calculationResult.breakEvenPointUnits.toLocaleString()
                 }}</span>
                 หน่วย
@@ -797,7 +781,7 @@ function openEditModalGroup(group) {
               <p class="font-semibold">4. สรุปยอดขาย ณ จุดคุ้มทุน</p>
               <p class="mt-1">
                 รวมเป็นยอดขาย
-                <span class="font-mono font-semibold">{{
+                <span class="font-semibold">{{
                   calculationResult.breakEvenPointRevenue.toLocaleString(
                     'en-US',
                     { minimumFractionDigits: 2, maximumFractionDigits: 2 }
@@ -820,5 +804,3 @@ function openEditModalGroup(group) {
     </div>
   </div>
 </template>
-
-<style src="@vueform/multiselect/themes/default.css"></style>

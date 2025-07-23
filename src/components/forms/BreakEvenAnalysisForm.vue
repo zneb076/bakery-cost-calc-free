@@ -11,11 +11,11 @@ const props = defineProps({
 const emit = defineEmits(['save', 'cancel']);
 
 const group = ref({});
+
 const productOptions = computed(() => {
   return props.availableProducts.map((p) => ({
     value: p.id,
-    label: p.name,
-    price: p.price, // ส่งราคามาด้วย
+    label: `${p.name} (${p.price} บาท)`,
   }));
 });
 
@@ -24,27 +24,18 @@ watch(
   (newData) => {
     group.value = JSON.parse(JSON.stringify(newData));
     if (!group.value.products || group.value.products.length === 0) {
-      group.value.products = [{ productId: null, salesMix: null, price: null }];
+      group.value.products = [{ productId: null, salesMix: null }];
     }
   },
   { immediate: true, deep: true }
 );
 
 function addRow() {
-  group.value.products.push({ productId: null, salesMix: null, price: null });
-}
-function removeRow(index) {
-  group.value.products.splice(index, 1);
+  group.value.products.push({ productId: null, salesMix: null });
 }
 
-// เมื่อเลือกสินค้า ให้ดึงราคามาใส่ให้
-function onProductSelect(item) {
-  const selectedProduct = productOptions.value.find(
-    (opt) => opt.value === item.productId
-  );
-  if (selectedProduct) {
-    item.price = selectedProduct.price;
-  }
+function removeRow(index) {
+  group.value.products.splice(index, 1);
 }
 
 function handleSubmit() {
@@ -53,12 +44,12 @@ function handleSubmit() {
     return;
   }
   const validProducts = group.value.products.filter(
-    (p) => p.productId && p.salesMix > 0 && p.price > 0
+    (p) => p.productId && p.salesMix > 0
   );
   if (validProducts.length === 0) {
     Swal.fire(
       'ข้อมูลไม่ครบถ้วน',
-      'กรุณาเลือกสินค้า, สัดส่วน, และราคาขายอย่างน้อย 1 รายการ',
+      'กรุณาเลือกสินค้าและใส่สัดส่วนการขายอย่างน้อย 1 รายการ',
       'error'
     );
     return;
@@ -90,7 +81,7 @@ function handleSubmit() {
               :key="index"
               class="rounded-lg bg-gray-50 p-3"
             >
-              <div class="flex items-center space-x-2">
+              <div class="flex items-end space-x-2">
                 <div class="flex-grow">
                   <label class="block text-xs font-medium text-gray-600"
                     >สินค้า</label
@@ -98,42 +89,28 @@ function handleSubmit() {
                   <Multiselect
                     v-model="item.productId"
                     :options="productOptions"
-                    @select="onProductSelect(item)"
                     placeholder="เลือกสินค้า"
                     class="mt-1"
                   />
                 </div>
-                <button
-                  @click="removeRow(index)"
-                  type="button"
-                  class="mb-2 flex h-10 w-10 flex-shrink-0 items-center justify-center self-end text-red-500"
-                >
-                  <font-awesome-icon icon="trash" />
-                </button>
-              </div>
-              <div class="mt-2 flex items-center space-x-2">
-                <div class="flex-grow">
+                <div class="w-32 flex-shrink-0">
                   <label class="block text-xs font-medium text-gray-600"
                     >สัดส่วนการขาย</label
                   >
                   <input
                     v-model.number="item.salesMix"
                     type="number"
-                    placeholder="เช่น 7"
+                    placeholder="สัดส่วน"
                     class="mt-1 w-full rounded-md border p-2"
                   />
                 </div>
-                <div class="flex-grow">
-                  <label class="block text-xs font-medium text-gray-600"
-                    >ราคาขาย (บาท)</label
-                  >
-                  <input
-                    v-model.number="item.price"
-                    type="number"
-                    placeholder="เช่น 25"
-                    class="mt-1 w-full rounded-md border p-2"
-                  />
-                </div>
+                <button
+                  @click="removeRow(index)"
+                  type="button"
+                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center text-red-500"
+                >
+                  <font-awesome-icon icon="trash" />
+                </button>
               </div>
             </div>
           </div>
@@ -156,7 +133,7 @@ function handleSubmit() {
         ยกเลิก
       </button>
       <button type="submit" class="rounded-md bg-primary px-4 py-2 text-white">
-        บันทึก
+        บันทึกกลุ่ม
       </button>
     </div>
   </form>

@@ -12,7 +12,10 @@ const emit = defineEmits(['save', 'cancel']);
 
 const group = ref({});
 const productOptions = computed(() => {
-  return props.availableProducts.map((p) => ({ value: p.id, label: p.name }));
+  return props.availableProducts.map((p) => ({
+    value: p.id,
+    label: p.name,
+  }));
 });
 
 watch(
@@ -55,8 +58,10 @@ function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <div class="p-3">
-      <h3 class="mb-4 text-2xl font-semibold">กลุ่มสำหรับหาต้นทุนแฝง</h3>
+    <div class="p-2">
+      <h3 class="mb-4 text-2xl font-semibold">
+        {{ group.id ? 'แก้ไขกลุ่ม' : 'สร้างกลุ่มสำหรับหาต้นทุนแฝง' }}
+      </h3>
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-medium">ชื่อกลุ่ม</label>
@@ -72,36 +77,35 @@ function handleSubmit() {
             <div
               v-for="(item, index) in group.products"
               :key="index"
-              class="rounded-lg bg-gray-50"
+              class="rounded-lg bg-gray-50 p-3"
             >
-              <div class="flex items-center space-x-2">
-                <div class="w-48">
+              <div class="flex items-end space-x-2">
+                <div class="w-[300px] flex-grow">
                   <label class="block text-xs font-medium text-gray-600"
-                    >สินค้า #{{ index + 1 }}</label
+                    >สินค้า</label
                   >
                   <Multiselect
                     v-model="item.productId"
                     :options="productOptions"
                     placeholder="เลือกสินค้า"
-                    class="mt-1 flex-grow"
+                    class="mt-1"
                   />
                 </div>
-                <div class="w-36">
-                  <label
-                    class="block text-center text-xs font-medium text-gray-600"
-                    >ยอดขาย (ชิ้น)/เดือน</label
-                  >
+                <div class="w-16 flex-shrink-0">
+                  <label class="block text-xs font-medium text-gray-600"
+                    >ยอดขาย (ชิ้น/เดือน)
+                  </label>
                   <input
                     v-model.number="item.monthlySales"
                     type="number"
                     placeholder="ชิ้น"
-                    class="mt-1 w-full rounded-md border p-2"
+                    class="mt-1 w-16 rounded-md border p-2"
                   />
                 </div>
                 <button
                   @click="removeRow(index)"
                   type="button"
-                  class="mb-2 w-[30px] self-end text-red-500"
+                  class="flex h-5 w-5 flex-shrink-0 items-center justify-center py-5 text-red-500"
                 >
                   <font-awesome-icon icon="trash" />
                 </button>
@@ -127,7 +131,7 @@ function handleSubmit() {
         ยกเลิก
       </button>
       <button type="submit" class="rounded-md bg-primary px-4 py-2 text-white">
-        บันทึก
+        บันทึกกลุ่ม
       </button>
     </div>
   </form>
