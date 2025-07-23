@@ -1,8 +1,17 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useAppMode } from '../composables/useAppMode.js';
+import ToggleSwitch from './ToggleSwitch.vue';
+
+const { currentMode, toggleMode } = useAppMode();
 
 const isMobileMenuOpen = ref(false);
 const isSettingsSubMenuOpen = ref(false);
+
+const isAdvanceMode = computed({
+  get: () => currentMode.value === 'advance',
+  set: () => toggleMode(),
+});
 
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value;
@@ -10,15 +19,20 @@ const toggleMobileMenu = () => {
 
 const menuItems = [
   { text: 'หน้าหลัก', name: 'Home', icon: 'home' },
-  { text: '1. จัดการวัตถุดิบ', name: 'Ingredients', icon: 'cheese' },
-  { text: '2. จัดการสูตรขนม', name: 'Recipes', icon: 'book' },
-  { text: '3. จัดการสินค้า', name: 'Products', icon: 'box-open' },
-  { text: '4. คำนวณต้นทุน (Basic)', name: 'Calculator', icon: 'calculator' },
+  { text: 'จัดการวัตถุดิบ', name: 'Ingredients', icon: 'cheese' },
+  { text: 'จัดการสูตรขนม', name: 'Recipes', icon: 'book' },
   {
-    text: '5. คำนวณต้นทุน (Advance)',
+    text: 'จัดการสินค้า',
+    name: 'Products',
+    icon: 'box-open',
+    advance: true,
+  },
+  { text: 'คำนวณต้นทุน (Basic)', name: 'Calculator', icon: 'calculator' },
+  {
+    text: 'คำนวณต้นทุน (Advance)',
     name: 'CalculatorAdvance',
     icon: 'chart-line',
-    disabled: false,
+    advance: true,
   },
   {
     text: 'ตั้งค่า',
@@ -29,6 +43,13 @@ const menuItems = [
     ],
   },
 ];
+
+const visibleMenuItems = computed(() => {
+  if (isAdvanceMode.value) {
+    return menuItems;
+  }
+  return menuItems.filter((item) => !item.advance);
+});
 
 const emit = defineEmits(['toggle-font']);
 </script>
@@ -45,6 +66,11 @@ const emit = defineEmits(['toggle-font']);
           Bakery Cost Calc
         </router-link>
         <div class="flex items-center space-x-4">
+          <div class="hidden items-center space-x-2 text-sm lg:flex">
+            <span>Basic</span>
+            <ToggleSwitch v-model="isAdvanceMode" />
+            <span>Advance</span>
+          </div>
           <button
             @click="$emit('toggle-font')"
             class="transition-colors hover:text-gray-200"
@@ -68,27 +94,31 @@ const emit = defineEmits(['toggle-font']);
       :class="[
         'fixed top-0 z-50 flex h-full w-[310px] flex-col bg-[#1F2937] text-white shadow-lg',
         'transform transition-transform duration-300 ease-in-out',
-        // --- ส่วนที่แก้ไขใหม่ทั้งหมด ---
-        // Desktop: อยู่ด้านซ้ายและแสดงเสมอ
         'lg:left-0 lg:translate-x-0',
-        // Mobile/Tablet: เริ่มต้นที่ด้านขวาและซ่อนอยู่
         isMobileMenuOpen ? 'right-0 translate-x-0' : 'right-0 translate-x-full',
       ]"
     >
-      <div class="flex items-center justify-between p-4 lg:justify-center">
-        <router-link
-          :to="{ name: 'Home' }"
-          @click="isMobileMenuOpen = false"
-          class="text-2xl font-bold text-white"
-        >
-        </router-link>
+      <div class="flex items-center justify-between p-4 lg:hidden">
+        <div class="flex items-center space-x-2 text-sm">
+          <span>Basic</span>
+          <ToggleSwitch v-model="isAdvanceMode" />
+          <span>Advance</span>
+        </div>
         <button @click="toggleMobileMenu" class="lg:hidden">
           <font-awesome-icon icon="xmark" class="h-6 w-6" />
         </button>
       </div>
 
+      <div class="hidden p-4 text-center lg:block">
+        <router-link
+          :to="{ name: 'Home' }"
+          class="text-2xl font-bold text-white"
+        >
+        </router-link>
+      </div>
+
       <ul class="mt-4 flex flex-col">
-        <li v-for="item in menuItems" :key="item.text">
+        <li v-for="item in visibleMenuItems" :key="item.text">
           <component
             :is="
               item.disabled ? 'span' : item.children ? 'button' : 'router-link'
@@ -114,10 +144,10 @@ const emit = defineEmits(['toggle-font']);
               v-if="item.children"
               :class="{ 'rotate-180': isSettingsSubMenuOpen }"
               class="ml-auto transition-transform"
-              ><font-awesome-icon icon="chevron-down"
-            /></span>
+            >
+              <font-awesome-icon icon="chevron-down" />
+            </span>
           </component>
-
           <ul v-if="item.children && isSettingsSubMenuOpen" class="bg-gray-800">
             <li v-for="child in item.children" :key="child.text">
               <router-link
@@ -131,22 +161,7 @@ const emit = defineEmits(['toggle-font']);
           </ul>
         </li>
       </ul>
-
-      <div class="mt-auto p-4 text-center">
-        <a
-          href="https://www.facebook.com/profile.php?id=61556714365876"
-          target="_blank"
-          ><img
-            src="/my-logo.png"
-            alt="Logo"
-            class="mx-auto mb-2 h-16 w-16 opacity-95"
-          />
-          <div class="text-sm text-gray-400">
-            by ขออีกคำ - homemade bakery
-          </div></a
-        >
-        <div class="text-xs text-gray-500">App v.1.0</div>
-      </div>
+      <div class="mt-auto p-4 text-center"></div>
     </aside>
   </div>
 </template>

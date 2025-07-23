@@ -17,6 +17,10 @@
             <p class="mt-2 text-sm text-gray-500">
               หาต้นทุนแฝงต่อชิ้นจากยอดขายและต้นทุนคงที่
             </p>
+            <p class="mt-2 text-xs text-red-700">
+              * ต้องรู้ยอดขายต่อเดือนและต้นทุนคงที่ (ค่าเช่า, ค่าน้ำ, ค่าไฟ,
+              อื่นๆ) เพื่อใช้ในการคำนวน *
+            </p>
           </div>
         </div>
       </router-link>
@@ -32,6 +36,7 @@
             <p class="mt-2 text-sm text-gray-500">
               คำนวณว่าต้องขายเท่าไหร่ถึงจะเริ่มมีกำไร
             </p>
+            <p class="mt-2 text-sm text-gray-500"></p>
           </div>
         </div>
       </router-link>

@@ -4,11 +4,19 @@ import Navbar from './components/Navbar.vue';
 import ScrollToTopButton from './components/ScrollToTopButton.vue';
 import ReloadPrompt from './components/ReloadPrompt.vue';
 import { useFontSwitcher } from './composables/useFontSwitcher.js';
+import { useAppMode } from './composables/useAppMode.js';
+import { useAdvanceWelcome } from './composables/useAdvanceWelcome.js';
+import WelcomeAdvanceModal from './components/WelcomeAdvanceModal.vue';
 
 const { loadInitialFont, toggleFont } = useFontSwitcher();
+const { currentMode } = useAppMode();
+const { showWelcome, checkToShowWelcome, dismissWelcome } = useAdvanceWelcome();
 
 onMounted(async () => {
   loadInitialFont();
+  if (currentMode.value === 'advance') {
+    checkToShowWelcome();
+  }
 });
 </script>
 
@@ -24,5 +32,8 @@ onMounted(async () => {
 
     <ScrollToTopButton />
     <ReloadPrompt />
+  </div>
+  <div>
+    <WelcomeAdvanceModal v-if="showWelcome" @close="dismissWelcome" />
   </div>
 </template>
