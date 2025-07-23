@@ -37,6 +37,7 @@ import {
   faBoxOpen,
   faPlus,
   faEllipsisVertical,
+  faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { faFacebook } from '@fortawesome/free-brands-svg-icons'; // 1. Import faFacebook
 
@@ -73,7 +74,8 @@ library.add(
   faChartPie,
   faBoxOpen,
   faPlus,
-  faEllipsisVertical
+  faEllipsisVertical,
+  faQuestionCircle
 );
 
 const app = createApp(App);

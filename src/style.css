@@ -45,4 +45,8 @@ input[type='number'] {
   body.font-mali p {
     @apply text-base; /* หรือขนาดอื่นๆ ที่คุณต้องการ */
   }
+
+  body.font-mali .text-xs {
+    @apply text-mali-xs; /* เรียกใช้คลาสที่เราสร้างใน tailwind.config.js */
+  }
 }

@@ -25,7 +25,7 @@ const menuItems = [
   { text: 'จัดการวัตถุดิบ', name: 'Ingredients', icon: 'cheese' },
   { text: 'จัดการสูตรขนม', name: 'Recipes', icon: 'book' },
   {
-    text: 'จัดการรายการขนม',
+    text: 'จัดการสินค้า (ขนม)',
     name: 'Products',
     icon: 'box-open',
     advance: true,
@@ -165,6 +165,21 @@ const emit = defineEmits(['toggle-font']);
           </ul>
         </li>
       </ul>
+      <div class="mt-4 px-6">
+        <router-link
+          :to="{ name: 'UserGuide' }"
+          @click="isMobileMenuOpen = false"
+          class="block w-full rounded-lg bg-gray-700 p-3 text-left transition-colors hover:bg-gray-600"
+        >
+          <div class="flex items-center space-x-3">
+            <font-awesome-icon icon="question-circle" class="w-6" />
+            <div>
+              <p class="">คู่มือการใช้งาน</p>
+              <p class="text-xs text-gray-300">เริ่มต้นใช้งานแอป</p>
+            </div>
+          </div>
+        </router-link>
+      </div>
       <div class="mt-auto p-4 text-center">
         <a
           href="https://www.facebook.com/profile.php?id=61556714365876"

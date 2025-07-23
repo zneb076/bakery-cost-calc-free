@@ -8,7 +8,8 @@ export default {
       fontSize: {
         'mali-base': ['1rem', { lineHeight: '1.4rem' }],
         'mali-h1': ['1.9rem', { lineHeight: '2.3rem' }], // Custom size for h1
-        'mali-sm': ['0.8rem', { lineHeight: '1.2rem' }], // Custom smaller size
+        'mali-sm': ['0.9rem', { lineHeight: '1.2rem' }], // Custom smaller size
+        'mali-xs': ['0.75rem', { lineHeight: '1rem' }],
       },
       colors: {
         primary: '#ff7081',

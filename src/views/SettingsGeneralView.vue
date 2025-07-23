@@ -55,7 +55,7 @@ async function saveSettings() {
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label class="block text-sm font-medium"
-            >ค่าแรง/ชม. (ค่าเริ่มต้น)</label
+            >ค่าแรง/ชม. (ค่าเริ่มต้น) (Basic mode)</label
           >
           <input
             type="number"
@@ -65,7 +65,7 @@ async function saveSettings() {
         </div>
         <div>
           <label class="block text-sm font-medium"
-            >ชั่วโมงที่ทำ (ค่าเริ่มต้น)</label
+            >ชั่วโมงที่ทำ (ค่าเริ่มต้น) (Basic mode)</label
           >
           <input
             type="number"
@@ -75,7 +75,7 @@ async function saveSettings() {
         </div>
         <div>
           <label class="block text-sm font-medium"
-            >% ทุนแฝง (ค่าเริ่มต้น)</label
+            >% ทุนแฝง (ค่าเริ่มต้น) (Basic mode)</label
           >
           <input
             type="number"
@@ -85,7 +85,7 @@ async function saveSettings() {
         </div>
         <div>
           <label class="block text-sm font-medium"
-            >% กำไรที่ต้องการ (แนะนำ)</label
+            >% กำไรที่ต้องการ (Basic mode)</label
           >
           <input
             type="number"

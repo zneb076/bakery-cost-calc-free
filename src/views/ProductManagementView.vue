@@ -118,7 +118,7 @@ function getRecipeName(recipeId) {
     <div
       class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center"
     >
-      <h1 class="text-3xl font-bold">จัดการรายการขนม</h1>
+      <h1 class="text-3xl font-bold">จัดการสินค้า (ขนม)</h1>
       <button
         @click="openAddModal"
         class="rounded-lg bg-primary px-4 py-2 text-white"

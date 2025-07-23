@@ -31,7 +31,7 @@ function close() {
                 :to="{ name: 'Products' }"
                 @click="close()"
                 class="font-semibold text-primary hover:underline"
-                >'จัดการรายการขนม'</router-link
+                >'จัดการสินค้า'</router-link
               >
 
               เพื่อสร้างรายการสินค้าที่จะขาย โดยอ้างอิงจากสูตรที่คุณมี
