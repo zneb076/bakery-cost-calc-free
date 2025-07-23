@@ -66,11 +66,6 @@ const emit = defineEmits(['toggle-font']);
           Bakery Cost Calc
         </router-link>
         <div class="flex items-center space-x-4">
-          <div class="hidden items-center space-x-2 text-sm lg:flex">
-            <span>Basic</span>
-            <ToggleSwitch v-model="isAdvanceMode" />
-            <span>Advance</span>
-          </div>
           <button
             @click="$emit('toggle-font')"
             class="transition-colors hover:text-gray-200"
@@ -99,7 +94,7 @@ const emit = defineEmits(['toggle-font']);
       ]"
     >
       <div class="flex items-center justify-between p-4 lg:hidden">
-        <div class="flex items-center space-x-2 text-sm">
+        <div class="flex items-center space-x-2 pl-4 pt-2 font-semibold">
           <span>Basic</span>
           <ToggleSwitch v-model="isAdvanceMode" />
           <span>Advance</span>
@@ -118,6 +113,11 @@ const emit = defineEmits(['toggle-font']);
       </div>
 
       <ul class="mt-4 flex flex-col">
+        <div class="hidden items-center space-x-2 p-6 font-semibold lg:flex">
+          <span>Basic</span>
+          <ToggleSwitch v-model="isAdvanceMode" />
+          <span>Advance</span>
+        </div>
         <li v-for="item in visibleMenuItems" :key="item.text">
           <component
             :is="
@@ -161,7 +161,21 @@ const emit = defineEmits(['toggle-font']);
           </ul>
         </li>
       </ul>
-      <div class="mt-auto p-4 text-center"></div>
+      <div class="mt-auto p-4 text-center">
+        <a
+          href="https://www.facebook.com/profile.php?id=61556714365876"
+          target="_blank"
+          ><img
+            src="/my-logo.png"
+            alt="Logo"
+            class="mx-auto mb-2 h-16 w-16 opacity-95"
+          />
+          <div class="text-sm text-gray-400">
+            by ขออีกคำ - homemade bakery
+          </div></a
+        >
+        <div class="text-xs text-gray-500">App v.1.0</div>
+      </div>
     </aside>
   </div>
 </template>
