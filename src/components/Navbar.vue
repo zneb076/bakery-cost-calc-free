@@ -60,11 +60,12 @@ const emit = defineEmits(['toggle-font']);
       class="sticky top-0 z-40 bg-primary text-white shadow-md lg:ml-[310px]"
     >
       <div
-        class="container mx-auto flex h-16 items-center justify-between px-4"
+        class="container mx-auto flex h-16 items-center justify-between px-2"
       >
         <router-link :to="{ name: 'Home' }" class="text-2xl font-semibold">
           Bakery Cost Calc
         </router-link>
+
         <div class="flex items-center space-x-4">
           <button
             @click="$emit('toggle-font')"

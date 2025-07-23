@@ -69,13 +69,22 @@
       <h2 class="mb-3 text-2xl font-semibold text-primary">
         ร่วมเป็นส่วนหนึ่งของเรา
       </h2>
-      <p class="mb-4 text-gray-700">
+      <p class="mb-8 text-gray-700">
         แอปพลิเคชันนี้สร้างขึ้นด้วยความตั้งใจที่จะช่วยเพื่อนๆ
         ชาวเบเกอรี่ทุกคนในการคำนวนต้นทุน ราคาขาย และคำนวนสูตร ได้สะดวกยิ่งขึ้น
         หากคุณชื่นชอบและเห็นว่าแอปนี้มีประโยชน์
         สามารถช่วยสนับสนุนและเป็นกำลังใจให้เราได้ง่ายๆ โดยการกดไลก์และติดตามเพจ
         "ขออีกคำ" ของเรา ขอบคุณครับ
       </p>
+      <a
+        href="https://www.facebook.com/profile.php?id=61556714365876"
+        target="_blank"
+        ><img
+          src="/my-logo.png"
+          alt="Logo"
+          class="mx-auto mb-2 h-24 w-24 opacity-95"
+        />
+      </a>
       <a
         href="https://www.facebook.com/profile.php?id=61556714365876"
         target="_blank"
