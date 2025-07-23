@@ -10,6 +10,14 @@
       และมองเห็นกำไรได้อย่างแม่นยำและง่ายดาย
     </p>
 
+    <div
+      class="mx-auto mb-6 max-w-2xl rounded-md border border-yellow-300 bg-yellow-100 p-2 text-sm text-yellow-800"
+    >
+      แอปพลิเคชันนี้ใช้งานได้ฟรี 100%
+      และมีวัตถุประสงค์เพื่อช่วยเหลือสังคมคนทำขนม
+      ห้ามมิให้นำไปจำหน่ายหรือแสวงหาผลกำไรทางการค้าโดยเด็ดขาด
+    </div>
+
     <div class="border-t pt-6">
       <h2 class="mb-3 text-2xl font-semibold text-secondary">
         เริ่มต้นใช้งานง่ายๆ ใน 3 ขั้นตอน
