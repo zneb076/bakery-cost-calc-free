@@ -182,7 +182,7 @@ function handleSubmit() {
           </p>
           <div>
             <label class="block text-sm font-medium text-gray-700"
-              >Yield เริ่มต้น (%)</label
+              >1. Yield เริ่มต้น (%)</label
             >
             <input
               v-model.number="formData.defaultYield"
@@ -191,7 +191,12 @@ function handleSubmit() {
               max="100"
               class="mt-1 w-full rounded-md border p-2"
             />
+            <p class="mt-1 text-xs text-gray-500">
+              คือเปอร์เซ็นต์ของวัตถุดิบที่ใช้ได้จริงหลังการเตรียม เช่น แครอท
+              100g ปอกเปลือกแล้วเหลือ 80g ให้ใส่ Yield เป็น 80
+            </p>
           </div>
+          <div class="mt-6 border-t"></div>
           <div class="mt-4">
             <div class="flex items-center">
               <input
@@ -208,9 +213,14 @@ function handleSubmit() {
                   shouldDisableCostByUnit ? 'text-gray-400' : 'text-gray-900'
                 "
               >
-                คิดต้นทุนเต็มหน่วยเสมอ
+                2. คิดต้นทุนเต็มหน่วยเสมอ
               </label>
             </div>
+            <p class="ml-6 mt-1 text-xs text-gray-500">
+              ใช้สำหรับวัตถุดิบที่ต้องใช้ทั้งหน่วยเสมอ เช่น ไข่ไก่ 1 ฟอง
+              (60กรัม) แต่ในสูตรเราใช้แค่ 25กรัม ที่เหลือเก็บไม่ได้ต้องทิ้ง
+              เราก็จะติ้กช่องนี้
+            </p>
           </div>
         </div>
       </div>
