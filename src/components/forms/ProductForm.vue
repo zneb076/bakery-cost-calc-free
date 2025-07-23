@@ -46,12 +46,12 @@ function handleSubmit() {
 <template>
   <form @submit.prevent="handleSubmit">
     <div class="p-6">
-      <h3 class="mb-4 text-2xl font-semibold">
-        {{ product.id ? 'แก้ไขสินค้า' : 'เพิ่มสินค้าใหม่' }}
+      <h3 class="mb-4 text-xl font-semibold">
+        {{ product.id ? 'แก้ไขรายการขนม' : 'เพิ่มรายการขนมใหม่จากสูตรนี้' }}
       </h3>
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium">ชื่อสินค้า</label>
+          <label class="block text-sm font-medium">ชื่อขนม</label>
           <input
             v-model="product.name"
             type="text"

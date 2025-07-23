@@ -393,7 +393,7 @@ const profitPerPiece = computed(() => {
     </div>
     <div v-else>
       <div class="rounded-lg bg-white p-4 shadow-md">
-        <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุน</h1>
+        <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุน Basic</h1>
         <div class="grid grid-cols-1 items-end gap-6 md:grid-cols-4">
           <div class="md:col-span-2">
             <label class="mb-1 block text-sm font-medium text-gray-700"

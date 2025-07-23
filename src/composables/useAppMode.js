@@ -9,26 +9,33 @@ export function useAppMode() {
   const router = useRouter();
   const { checkToShowWelcome } = useAdvanceWelcome();
 
-  const setMode = (mode) => {
+  const setMode = (mode, callback) => {
+    const oldMode = currentMode.value;
+    if (mode === oldMode) return;
+
     if (mode !== 'basic' && mode !== 'advance') {
       mode = 'basic';
     }
-    const oldMode = currentMode.value; // **FIX:** Moved declaration here
+
     currentMode.value = mode;
     localStorage.setItem(MODE_STORAGE_KEY, mode);
 
     if (mode === 'advance' && oldMode === 'basic') {
+      if (callback) callback(); // เรียก callback (ปิดเมนู)
       checkToShowWelcome(true);
-    }
-
-    if (mode === 'basic' && oldMode === 'advance') {
-      router.push({ name: 'Home' });
+    } else {
+      // For simplicity and to ensure all states reset, reload is a safe option.
+      if (mode === 'basic') {
+        router.push({ name: 'Home' }).then(() => window.location.reload());
+      } else {
+        window.location.reload();
+      }
     }
   };
 
-  const toggleMode = () => {
+  const toggleMode = (callback) => {
     const nextMode = currentMode.value === 'basic' ? 'advance' : 'basic';
-    setMode(nextMode);
+    setMode(nextMode, callback);
   };
 
   return {

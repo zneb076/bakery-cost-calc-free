@@ -10,7 +10,10 @@ const isSettingsSubMenuOpen = ref(false);
 
 const isAdvanceMode = computed({
   get: () => currentMode.value === 'advance',
-  set: () => toggleMode(),
+  set: () =>
+    toggleMode(() => {
+      isMobileMenuOpen.value = false;
+    }),
 });
 
 const toggleMobileMenu = () => {
@@ -22,7 +25,7 @@ const menuItems = [
   { text: 'จัดการวัตถุดิบ', name: 'Ingredients', icon: 'cheese' },
   { text: 'จัดการสูตรขนม', name: 'Recipes', icon: 'book' },
   {
-    text: 'จัดการสินค้า',
+    text: 'จัดการรายการขนม',
     name: 'Products',
     icon: 'box-open',
     advance: true,
@@ -60,7 +63,7 @@ const emit = defineEmits(['toggle-font']);
       class="sticky top-0 z-40 bg-primary text-white shadow-md lg:ml-[310px]"
     >
       <div
-        class="container mx-auto flex h-16 items-center justify-between px-2"
+        class="container mx-auto flex h-16 items-center justify-between px-3"
       >
         <router-link :to="{ name: 'Home' }" class="text-2xl font-semibold">
           Bakery Cost Calc

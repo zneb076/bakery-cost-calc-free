@@ -2,10 +2,11 @@
 import { ref, onMounted, computed } from 'vue';
 import { db } from '../services/db.js';
 import Swal from 'sweetalert2';
-
 import BaseModal from '../components/BaseModal.vue';
 import RecipeForm from '../components/forms/RecipeForm.vue';
 import RecipeQuickViewModal from '../components/RecipeQuickViewModal.vue';
+import ProductForm from '../components/forms/ProductForm.vue';
+import ActionMenu from '../components/ActionMenu.vue';
 
 const recipes = ref([]);
 const availableIngredients = ref([]);
@@ -15,6 +16,8 @@ const editingRecipe = ref(null);
 const searchQuery = ref('');
 const isQuickViewModalOpen = ref(false);
 const recipeForQuickView = ref(null);
+const isProductModalOpen = ref(false); // 2. State ใหม่
+const newProductFromRecipe = ref(null); // 2. State ใหม่
 
 // Computed property to filter recipes based on search query
 const filteredRecipes = computed(() => {
@@ -96,37 +99,89 @@ async function handleSave(recipeData) {
   }
 }
 
-function deleteRecipe(id, name) {
-  Swal.fire({
-    title: `คุณแน่ใจหรือไม่?`,
-    text: `คุณต้องการลบสูตร "${name}" ใช่ไหม?`,
+async function deleteRecipe(id, name) {
+  // 1. ค้นหาสินค้าทั้งหมดที่ใช้สูตรนี้
+  const productsUsingRecipe = await db.products
+    .where('recipeId')
+    .equals(id)
+    .toArray();
+
+  // 2. ถ้าเจอสินค้าที่ใช้งานอยู่
+  if (productsUsingRecipe.length > 0) {
+    const productNames = productsUsingRecipe.map((p) => p.name).join(', ');
+    await Swal.fire({
+      icon: 'error',
+      title: 'ไม่สามารถลบสูตรนี้ได้',
+      html: `เนื่องจากสูตร <strong>${name}</strong> ถูกใช้งานในสินค้า: <br><strong>${productNames}</strong><br><br>กรุณาลบสินค้าเหล่านี้ก่อน`,
+    });
+    return; // หยุดการทำงาน
+  }
+
+  // 3. ถ้าไม่เจอ ให้ยืนยันการลบตามปกติ
+  const result = await Swal.fire({
+    title: `ลบสูตร "${name}"?`,
+    text: 'การกระทำนี้ไม่สามารถย้อนกลับได้',
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
-    confirmButtonText: 'ใช่, ลบเลย!',
+    confirmButtonText: 'ใช่, ลบเลย',
     cancelButtonText: 'ยกเลิก',
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      await db.recipes.delete(id);
-      await fetchData();
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'ลบสูตรแล้ว',
-        showConfirmButton: false,
-        timer: 3000,
-      });
-    }
   });
+
+  if (result.isConfirmed) {
+    await db.recipes.delete(id);
+    await fetchData();
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'ลบสำเร็จ',
+      showConfirmButton: false,
+      timer: 1000,
+    });
+  }
 }
 
 onMounted(fetchData);
+
+function openQuickAddProductModal(recipe) {
+  newProductFromRecipe.value = {
+    name: '', // ใช้ชื่อสูตรเป็นชื่อสินค้าเริ่มต้น
+    recipeId: recipe.id,
+    weight: null,
+    price: null,
+  };
+  isProductModalOpen.value = true;
+}
+
+// 4. ฟังก์ชันใหม่สำหรับบันทึกสินค้า
+async function handleProductSave(productData) {
+  const plainData = JSON.parse(JSON.stringify(productData));
+  try {
+    await db.products.add(plainData);
+    isProductModalOpen.value = false;
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: `เพิ่มสินค้า "${plainData.name}" เรียบร้อยแล้ว`,
+      showConfirmButton: false,
+      timer: 3000,
+    });
+  } catch (error) {
+    console.error('Save failed:', error);
+    Swal.fire(
+      'เกิดข้อผิดพลาด',
+      'มีสินค้าชื่อนี้อยู่แล้ว หรือเกิดปัญหาในการบันทึก',
+      'error'
+    );
+  }
+}
 </script>
 
 <template>
   <div>
-    <div class="rounded-lg bg-white p-4 shadow-md">
+    <div class="rounded-lg bg-white p-3 shadow-md">
       <div class="overflow-x-auto">
         <div class="mb-6 flex items-center justify-between">
           <h1 class="text-2xl font-bold">จัดการสูตรขนม</h1>
@@ -171,7 +226,7 @@ onMounted(fetchData);
               :key="recipe.id"
               class="border-b hover:bg-gray-50"
             >
-              <td class="px-4 py-3">
+              <td class="px-2 py-2">
                 {{ recipe.name }}
                 <span
                   v-if="recipe.isSubRecipe"
@@ -181,7 +236,15 @@ onMounted(fetchData);
                 </span>
               </td>
               <td class="w-24 py-3 text-right">
-                <div class="flex items-center justify-center space-x-4">
+                <div class="flex items-center justify-end space-x-3">
+                  <button
+                    v-if="!recipe.isSubRecipe"
+                    @click.stop="openQuickAddProductModal(recipe)"
+                    class="text-gray-500 hover:text-green-600"
+                    title="สร้างสินค้าจากสูตรนี้"
+                  >
+                    <font-awesome-icon icon="plus" />
+                  </button>
                   <button
                     @click="openQuickViewModal(recipe)"
                     class="text-gray-500 transition-colors hover:text-green-600"
@@ -197,20 +260,22 @@ onMounted(fetchData);
                     <font-awesome-icon icon="calculator" size="lg" />
                   </router-link>
 
-                  <button
-                    @click="openEditModal(recipe)"
-                    class="text-gray-500 transition-colors hover:text-secondary"
-                    title="แก้ไข"
-                  >
-                    <font-awesome-icon icon="pencil" />
-                  </button>
-                  <button
-                    @click="deleteRecipe(recipe.id, recipe.name)"
-                    class="text-gray-500 transition-colors hover:text-primary"
-                    title="ลบ"
-                  >
-                    <font-awesome-icon icon="trash" />
-                  </button>
+                  <ActionMenu>
+                    <div class="py-1">
+                      <button
+                        @click.stop="openEditModal(recipe)"
+                        class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        แก้ไข
+                      </button>
+                      <button
+                        @click.stop="deleteRecipe(recipe.id, recipe.name)"
+                        class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                      >
+                        ลบ
+                      </button>
+                    </div>
+                  </ActionMenu>
                 </div>
               </td>
             </tr>
@@ -236,6 +301,15 @@ onMounted(fetchData);
         v-if="recipeForQuickView"
         :recipe="recipeForQuickView"
         :all-ingredients-and-sub-recipes="availableIngredients"
+      />
+    </BaseModal>
+    <BaseModal v-if="isProductModalOpen" @close="isProductModalOpen = false">
+      <ProductForm
+        v-if="newProductFromRecipe"
+        :initial-data="newProductFromRecipe"
+        :available-recipes="recipes"
+        @save="handleProductSave"
+        @cancel="isProductModalOpen = false"
       />
     </BaseModal>
   </div>

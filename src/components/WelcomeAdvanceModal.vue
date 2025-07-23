@@ -12,7 +12,7 @@ function close() {
 
 <template>
   <BaseModal @close="close(false)">
-    <div class="p-6">
+    <div class="p-4">
       <h2 class="mb-4 text-2xl font-bold text-secondary">
         ยินดีต้อนรับสู่โหมด Advance!
       </h2>
@@ -31,7 +31,7 @@ function close() {
                 :to="{ name: 'Products' }"
                 @click="close()"
                 class="font-semibold text-primary hover:underline"
-                >'จัดการสินค้า'</router-link
+                >'จัดการรายการขนม'</router-link
               >
 
               เพื่อสร้างรายการสินค้าที่จะขาย โดยอ้างอิงจากสูตรที่คุณมี
