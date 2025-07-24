@@ -162,7 +162,7 @@ function handleSubmit() {
 
         <div v-if="isUnitNotGrams" class="rounded-md bg-blue-50 p-3">
           <label class="block text-sm font-medium text-blue-800"
-            >น้ำหนักมาตรฐานต่อ 1 หน่วย (กรัม)</label
+            >น้ำหนักเป็นกรัม ต่อ 1 {{ formData.purchaseUnit }}</label
           >
           <p class="mb-1 text-xs text-gray-500">เช่น ไข่ 1 ฟองหนัก 50 กรัม</p>
           <input
@@ -192,8 +192,13 @@ function handleSubmit() {
               class="mt-1 w-full rounded-md border p-2"
             />
             <p class="mt-1 text-xs text-gray-500">
-              คือเปอร์เซ็นต์ของวัตถุดิบที่ใช้ได้จริงหลังการเตรียม เช่น แครอท
-              100g ปอกเปลือกแล้วเหลือ 80g ให้ใส่ Yield เป็น 80
+              คือเปอร์เซ็นต์ของวัตถุดิบที่ใช้ได้จริงหลังการเตรียม เช่น
+              กล้วยหอมซื้อมา 100g ปอกเปลือกแล้วเหลือเนื้อกล้วยที่ใช้ได้ 80g
+              ให้ใส่ Yield เป็น 80 <br />
+              <span class="text-green-700"
+                >วิธีคิด <br />(น้ำหนักที่เหลือ x 100) / น้ำหนักที่ซื้อมา
+                <br />= ค่า Yield ที่เอาไปกรอก</span
+              >
             </p>
           </div>
           <div class="mt-6 border-t"></div>
