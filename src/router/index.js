@@ -1,12 +1,17 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
+import HomeView from '../views/HomeView.vue';
 // ไม่ต้อง import component ที่นี่แล้ว
 
 const routes = [
   {
     path: '/',
     name: 'Home',
-    // เปลี่ยนมาใช้ dynamic import
-    component: () => import('../views/HomeView.vue'),
+    component: HomeView,
+  },
+  {
+    path: '/home',
+    name: 'Home',
+    component: HomeView,
   },
   {
     path: '/calculator',

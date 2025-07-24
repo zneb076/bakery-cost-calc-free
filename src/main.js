@@ -2,6 +2,7 @@ import { createApp } from 'vue';
 import './style.css';
 import App from './App.vue';
 import router from './router';
+import vueGtag from 'vue-gtag-next';
 import RecipeSheetRow from './components/RecipeSheetRow.vue';
 
 /* Font Awesome Configuration */
@@ -81,6 +82,12 @@ library.add(
 const app = createApp(App);
 
 app.use(router);
+
+app.use(vueGtag, {
+  property: {
+    id: 'G-X2STXFS6X7', // <-- นำ Measurement ID ของคุณมาใส่ที่นี่
+  },
+});
 
 // ลงทะเบียน FontAwesomeIcon component ให้ใช้ได้ทั่วทั้งโปรเจกต์
 app.component('font-awesome-icon', FontAwesomeIcon);
