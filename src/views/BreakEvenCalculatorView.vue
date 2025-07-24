@@ -105,7 +105,7 @@ function loadGroupToLive(group) {
     icon: 'success',
     title: `โหลดข้อมูลกลุ่ม "${group.name}" แล้ว`,
     showConfirmButton: false,
-    timer: 2000,
+    timer: 1000,
   });
   nextTick(() => {
     liveCalculatorSection.value?.scrollIntoView({ behavior: 'smooth' });
@@ -278,6 +278,7 @@ async function calculateBreakEven(group) {
     groupName: group.name,
     productDetails,
     weightedAverageCm,
+    totalWeightedCm,
     totalMixRatio,
     breakEvenPointUnits: Math.ceil(breakEvenPointTotalUnits),
     breakEvenPointRevenue,
@@ -560,24 +561,28 @@ async function deleteGroup(id, name) {
                 </p>
               </td>
               <td class="space-x-2 py-2 text-right">
-                <button
-                  @click="loadGroupToLive(group)"
-                  class="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
-                >
-                  โหลด
-                </button>
-                <button
-                  @click="openEditGroupModal(group)"
-                  class="text-gray-500 hover:text-secondary"
-                >
-                  <font-awesome-icon icon="pencil" />
-                </button>
-                <button
-                  @click="deleteGroup(group.id, group.name)"
-                  class="text-gray-500 hover:text-primary"
-                >
-                  <font-awesome-icon icon="trash" />
-                </button>
+                <div class="flex flex-col items-center gap-4">
+                  <button
+                    @click="loadGroupToLive(group)"
+                    class="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
+                  >
+                    โหลด
+                  </button>
+                  <div class="flex gap-4">
+                    <button
+                      @click="openEditGroupModal(group)"
+                      class="text-gray-500 hover:text-secondary"
+                    >
+                      <font-awesome-icon icon="pencil" />
+                    </button>
+                    <button
+                      @click="deleteGroup(group.id, group.name)"
+                      class="text-gray-500 hover:text-primary"
+                    >
+                      <font-awesome-icon icon="trash" />
+                    </button>
+                  </div>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -733,7 +738,7 @@ async function deleteGroup(id, name) {
           @cancel="closeGroupModal"
         />
       </BaseModal>
-      <BaseModal
+      <!-- <BaseModal
         v-if="isStepsModalOpen"
         @close="isStepsModalOpen = false"
         size="large"
@@ -796,6 +801,109 @@ async function deleteGroup(id, name) {
               </p>
             </div>
           </div>
+          <div class="mt-6 text-right">
+            <button
+              @click="isStepsModalOpen = false"
+              class="rounded-md bg-primary px-4 py-2 text-white"
+            >
+              ปิด
+            </button>
+          </div>
+        </div>
+      </BaseModal> -->
+
+      <BaseModal
+        v-if="isStepsModalOpen"
+        @close="isStepsModalOpen = false"
+        size="large"
+      >
+        <div v-if="calculationResult" class="p-3">
+          <h3 class="mb-4 text-2xl font-semibold">ขั้นตอนการคำนวณจุดคุ้มทุน</h3>
+
+          <div class="space-y-6 text-sm">
+            <div class="rounded-md bg-gray-50 p-3">
+              <p class="text-base font-semibold">
+                1. หากำไรส่วนเกิน (Contribution Margin) ต่อหน่วย
+              </p>
+              <p class="mb-2 text-xs text-gray-500">
+                สูตร: ราคาขาย - ต้นทุนผันแปร
+              </p>
+              <table class="w-full">
+                <tbody>
+                  <tr
+                    v-for="p in calculationResult.productDetails"
+                    :key="p.productId"
+                  >
+                    <td class="py-1 pr-2">{{ p.name }}</td>
+                    <td class="py-1 text-right">
+                      {{ p.sellingPrice.toFixed(2) }} -
+                      {{ p.variableCost.toFixed(2) }}
+                    </td>
+                    <td class="py-1 text-right font-semibold">
+                      = {{ p.contributionMargin.toFixed(2) }} บาท
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="rounded-md bg-gray-50 p-3">
+              <p class="text-base font-semibold">
+                2. หากำไรส่วนเกินถัวเฉลี่ย (Weighted Avg. CM)
+              </p>
+              <p class="mb-2 text-xs text-gray-500">
+                สูตร: (กำไรส่วนเกิน x สัดส่วน) รวมกัน / สัดส่วนรวม
+              </p>
+              <div>
+                <p>
+                  กำไรส่วนเกินถ่วงน้ำหนักรวม:
+                  {{ calculationResult.totalWeightedCm.toFixed(2) }}
+                </p>
+                <p>
+                  สัดส่วนรวม:
+                  {{ calculationResult.totalMixRatio }}
+                </p>
+                <p class="mt-1 border-t pt-1">
+                  {{ calculationResult.totalWeightedCm.toFixed(2) }} /
+                  {{ calculationResult.totalMixRatio }} =
+                  <span class="font-semibold">{{
+                    calculationResult.weightedAverageCm.toFixed(2)
+                  }}</span>
+                  บาท/หน่วย
+                </p>
+              </div>
+            </div>
+
+            <div class="rounded-md bg-gray-50 p-3">
+              <p class="text-base font-semibold">3. หาจุดคุ้มทุน (หน่วย)</p>
+              <p class="mb-2 text-xs text-gray-500">
+                สูตร: ต้นทุนคงที่ทั้งหมด / กำไรส่วนเกินถัวเฉลี่ย
+              </p>
+              <p>
+                {{ Number(fixedCosts).toLocaleString() }} /
+                {{ calculationResult.weightedAverageCm.toFixed(2) }} =
+                <span class="text-base font-semibold">{{
+                  calculationResult.breakEvenPointUnits.toLocaleString()
+                }}</span>
+                หน่วยผสม
+              </p>
+            </div>
+
+            <div class="rounded-md bg-gray-50 p-3">
+              <p class="text-base font-semibold">4. สรุปยอดขาย ณ จุดคุ้มทุน</p>
+              <p class="mt-1">
+                รวมเป็นยอดขาย
+                <span class="text-base font-semibold">{{
+                  calculationResult.breakEvenPointRevenue.toLocaleString(
+                    'en-US',
+                    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                  )
+                }}</span>
+                บาท
+              </p>
+            </div>
+          </div>
+
           <div class="mt-6 text-right">
             <button
               @click="isStepsModalOpen = false"

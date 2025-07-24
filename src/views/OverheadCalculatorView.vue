@@ -457,7 +457,7 @@ async function saveLiveGroup() {
         </div>
       </div>
 
-      <div class="rounded-lg bg-white p-6 shadow-md">
+      <div class="rounded-lg bg-white p-4 shadow-md">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-2xl font-semibold">กลุ่มที่บันทึกไว้</h2>
         </div>
@@ -485,24 +485,28 @@ async function saveLiveGroup() {
                 </p>
               </td>
               <td class="space-x-2 py-2 text-right">
-                <button
-                  @click="loadGroupToLive(group)"
-                  class="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
-                >
-                  โหลด
-                </button>
-                <button
-                  @click="openEditModal(group)"
-                  class="text-gray-500 hover:text-secondary"
-                >
-                  <font-awesome-icon icon="pencil" />
-                </button>
-                <button
-                  @click="deleteGroup(group.id, group.name)"
-                  class="text-gray-500 hover:text-primary"
-                >
-                  <font-awesome-icon icon="trash" />
-                </button>
+                <div class="flex flex-col items-center gap-2">
+                  <button
+                    @click="loadGroupToLive(group)"
+                    class="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
+                  >
+                    โหลด
+                  </button>
+                  <div class="flex gap-4">
+                    <button
+                      @click="openEditModal(group)"
+                      class="text-gray-500 hover:text-secondary"
+                    >
+                      <font-awesome-icon icon="pencil" />
+                    </button>
+                    <button
+                      @click="deleteGroup(group.id, group.name)"
+                      class="text-gray-500 hover:text-primary"
+                    >
+                      <font-awesome-icon icon="trash" />
+                    </button>
+                  </div>
+                </div>
               </td>
             </tr>
           </tbody>
