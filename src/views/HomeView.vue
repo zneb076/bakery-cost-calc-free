@@ -13,7 +13,7 @@
   </div>
   <div class="rounded-b-lg bg-white p-4 shadow-md md:p-6 dark:bg-gray-700">
     <div
-      class="mx-auto mb-6 max-w-2xl rounded-md border border-yellow-300 bg-yellow-100 p-2 text-sm text-yellow-800"
+      class="mx-auto mb-6 max-w-2xl rounded-md border border-yellow-300 bg-yellow-100 p-2 text-sm text-yellow-800 dark:bg-red-100 dark:text-gray-600"
     >
       แอปพลิเคชันนี้ใช้งานได้ฟรี <span class="text-lg">100%</span>
       และมีวัตถุประสงค์เพื่อแบ่งปันสำหรับสังคมคนทำเบเกอรี่

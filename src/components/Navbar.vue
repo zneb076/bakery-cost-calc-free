@@ -64,7 +64,7 @@ const emit = defineEmits(['toggle-font']);
       class="sticky top-0 z-40 bg-primary text-white shadow-md lg:ml-[310px]"
     >
       <div
-        class="dark:bg-primary-dark container mx-auto flex h-16 items-center justify-between px-3"
+        class="container mx-auto flex h-16 items-center justify-between px-3 dark:bg-gray-500"
       >
         <router-link :to="{ name: 'Home' }" class="text-2xl font-semibold">
           Bakery Cost Calc
