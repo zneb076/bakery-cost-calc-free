@@ -372,7 +372,7 @@ async function saveLiveGroup() {
     <div v-else>
       <div
         ref="liveCalculatorSection"
-        class="mb-6 rounded-lg bg-white p-4 shadow-md"
+        class="mb-6 rounded-lg bg-white p-4 shadow-md dark:bg-gray-700"
       >
         <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุนแฝงต่อชิ้น</h1>
         <div class="border-t pt-4">
@@ -383,7 +383,7 @@ async function saveLiveGroup() {
             <input
               v-model.number="fixedCosts"
               type="number"
-              class="mt-1 w-full rounded-md border p-2 md:w-1/2"
+              class="mt-1 w-full rounded-md border p-2 md:w-1/2 dark:bg-slate-100 dark:text-gray-600"
             />
           </div>
           <h4 class="mb-2 font-semibold">รายการสินค้า</h4>
@@ -391,7 +391,7 @@ async function saveLiveGroup() {
             <div
               v-for="(item, index) in liveProducts"
               :key="index"
-              class="rounded-lg bg-gray-50 p-3"
+              class="rounded-lg bg-gray-50 p-3 dark:bg-gray-400"
             >
               <div class="flex items-end space-x-2">
                 <div class="flex-grow">
@@ -402,6 +402,7 @@ async function saveLiveGroup() {
                     v-model="item.productId"
                     :options="productOptions"
                     placeholder="เลือกสินค้า"
+                    class="text-gray-600"
                   />
                 </div>
                 <div class="w-16 flex-shrink-0">
@@ -412,7 +413,7 @@ async function saveLiveGroup() {
                     v-model.number="item.monthlySales"
                     type="number"
                     placeholder="ชิ้น"
-                    class="mt-1 w-16 rounded-md border p-2"
+                    class="mt-1 w-16 rounded-md border p-2 dark:text-gray-600"
                   />
                 </div>
                 <button
@@ -429,7 +430,7 @@ async function saveLiveGroup() {
             <button
               @click="addLiveProductRow"
               type="button"
-              class="font-semibold text-primary"
+              class="dark:text-primary-dark font-semibold text-primary"
             >
               + เพิ่มสินค้า
             </button>
@@ -449,7 +450,7 @@ async function saveLiveGroup() {
             </button>
             <button
               @click="calculateFromLive"
-              class="rounded-lg bg-primary px-4 py-2 font-bold text-white"
+              class="dark:bg-primary-dark rounded-lg bg-primary px-4 py-2 font-bold text-white dark:text-gray-600"
             >
               คำนวณ
             </button>
@@ -457,7 +458,7 @@ async function saveLiveGroup() {
         </div>
       </div>
 
-      <div class="rounded-lg bg-white p-4 shadow-md">
+      <div class="rounded-lg bg-white p-4 shadow-md dark:bg-gray-700">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-2xl font-semibold">กลุ่มที่บันทึกไว้</h2>
         </div>
@@ -475,7 +476,7 @@ async function saveLiveGroup() {
             >
               <td class="py-2">
                 <p class="font-semibold">{{ group.name }}</p>
-                <p class="text-xs text-gray-500">
+                <p class="text-xs text-gray-500 dark:text-slate-200">
                   ประกอบด้วย:
                   {{
                     group.products
@@ -488,7 +489,7 @@ async function saveLiveGroup() {
                 <div class="flex flex-col items-center gap-2">
                   <button
                     @click="loadGroupToLive(group)"
-                    class="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
+                    class="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300 dark:text-gray-600"
                   >
                     โหลด
                   </button>
@@ -516,12 +517,14 @@ async function saveLiveGroup() {
       <div
         ref="resultsSection"
         v-if="calculationResult"
-        class="mb-8 mt-6 rounded-lg bg-white p-3 shadow-md"
+        class="mb-8 mt-6 rounded-lg bg-white p-3 shadow-md dark:bg-gray-700"
       >
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-2xl font-semibold">
             ผลการคำนวณ:<br />
-            <span class="text-primary">{{ calculationResult.groupName }}</span>
+            <span class="dark:text-primary-dark text-primary">{{
+              calculationResult.groupName
+            }}</span>
           </h2>
           <button
             @click="isStepsModalOpen = true"
@@ -531,8 +534,8 @@ async function saveLiveGroup() {
             <span class="ml-1 text-sm">ดูขั้นตอนการคำนวณ</span>
           </button>
         </div>
-        <table class="min-w-full border text-sm">
-          <thead class="bg-gray-100">
+        <table class="min-w-full border text-sm dark:border-gray-700">
+          <thead class="bg-gray-100 dark:bg-gray-800">
             <tr>
               <th class="px-3 py-2 text-left">ชื่อสินค้า</th>
               <th class="w-12 px-3 py-2 text-right">ต้นทุนวัตถุดิบ/ชิ้น</th>

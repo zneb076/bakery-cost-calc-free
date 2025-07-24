@@ -110,11 +110,11 @@ defineExpose({ focus });
       @focus="showOptions = true"
       @blur="handleBlur"
       @keydown="handleKeydown"
-      class="w-full rounded-md border border-gray-300 px-3 py-2"
+      class="w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-white dark:text-slate-800"
     />
     <ul
       v-if="showOptions && filteredOptions.length > 0"
-      class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+      class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:bg-gray-600"
     >
       <li
         v-for="(option, index) in filteredOptions"
@@ -122,7 +122,7 @@ defineExpose({ focus });
         @mousedown.prevent="selectOption(option)"
         :class="[
           'cursor-pointer px-3 py-2',
-          { 'bg-gray-100': index === activeIndex },
+          { 'bg-gray-100 dark:text-gray-600': index === activeIndex },
         ]"
       >
         {{ option }}

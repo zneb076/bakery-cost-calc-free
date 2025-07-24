@@ -392,11 +392,12 @@ const profitPerPiece = computed(() => {
       <p>กำลังโหลดข้อมูล...</p>
     </div>
     <div v-else>
-      <div class="rounded-lg bg-white p-4 shadow-md">
+      <div class="rounded-lg bg-white p-4 shadow-md dark:bg-gray-700">
         <h1 class="mb-6 text-3xl font-bold">คำนวณต้นทุน Basic</h1>
         <div class="grid grid-cols-1 items-end gap-6 md:grid-cols-4">
           <div class="md:col-span-2">
-            <label class="mb-1 block text-sm font-medium text-gray-700"
+            <label
+              class="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-200"
               >เลือกสินค้าหรือสูตร</label
             >
             <ProductRecipeAutocomplete
@@ -406,24 +407,26 @@ const profitPerPiece = computed(() => {
             />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700"
+            <label
+              class="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-200"
               >จำนวนที่ต้องการผลิต (ชิ้น)</label
             >
             <input
               v-model.number="productionQuantity"
               type="number"
-              class="w-full rounded-md border border-gray-300 px-3 py-2"
+              class="w-full rounded-md border border-gray-300 px-3 py-2 dark:text-gray-600"
             />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700"
+            <label
+              class="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-200"
               >น้ำหนักต่อชิ้น (กรัม)</label
             >
             <input
               v-model.number="weightPerPiece"
               :disabled="selectedItemInfo?.type === 'product'"
               type="number"
-              class="w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-200"
+              class="w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-200 dark:text-gray-600"
             />
           </div>
         </div>
@@ -431,7 +434,7 @@ const profitPerPiece = computed(() => {
           <button
             @click="calculateCost"
             :disabled="isLoading"
-            class="rounded-lg bg-primary px-6 py-2 font-bold text-white transition-opacity hover:bg-opacity-90 disabled:opacity-50"
+            class="dark:bg-primary-dark rounded-lg bg-primary px-6 py-2 font-bold text-white transition-opacity hover:bg-opacity-90 disabled:opacity-50 dark:text-gray-600"
           >
             <span v-if="isLoading">กำลังคำนวณ...</span>
             <span v-else>คำนวณต้นทุน</span>
@@ -441,7 +444,7 @@ const profitPerPiece = computed(() => {
 
       <div
         v-if="calculationResult"
-        class="mt-5 rounded-lg bg-white p-4 shadow-md"
+        class="mt-5 rounded-lg bg-white p-4 shadow-md dark:bg-gray-700"
       >
         <h2 class="mb-4 text-xl font-semibold">
           ต้นทุนสำหรับ
@@ -449,9 +452,11 @@ const profitPerPiece = computed(() => {
             selectedItemInfo.type === 'product' ? 'สินค้า' : 'สูตร'
           }}</span
           >:
-          <span class="text-primary">{{ selectedItemInfo.data.name }}</span>
+          <span class="dark:text-primary-dark text-primary">{{
+            selectedItemInfo.data.name
+          }}</span>
         </h2>
-        <p class="mb-6 text-gray-600">
+        <p class="mb-6 text-gray-600 dark:text-slate-200">
           สำหรับขนมจำนวน {{ productionQuantity }} ชิ้น, ขนาด
           {{ weightPerPiece }} กรัม/ชิ้น <br />
           (น้ำหนักรวม
@@ -466,7 +471,7 @@ const profitPerPiece = computed(() => {
         <div class="overflow-x-auto">
           <div
             v-if="isYieldApplied || isWholeUnitCostApplied"
-            class="mb-2 flex items-center space-x-4 text-xs text-gray-500"
+            class="mb-2 flex items-center space-x-4 text-xs text-gray-500 dark:text-slate-200"
           >
             <span>*ต้นทุนรวมได้คำนวณตาม:</span>
             <div v-if="isYieldApplied" class="flex items-center space-x-1">
@@ -483,19 +488,19 @@ const profitPerPiece = computed(() => {
           </div>
           <table class="min-w-full">
             <thead>
-              <tr class="border-b-2 border-gray-300">
+              <tr class="border-b-2 border-gray-300 dark:bg-gray-700">
                 <th
-                  class="px-2 py-2 text-left text-sm font-semibold text-gray-700"
+                  class="px-2 py-2 text-left text-sm font-semibold text-gray-700 dark:text-slate-200"
                 >
                   วัตถุดิบ
                 </th>
                 <th
-                  class="px-2 py-2 text-right text-sm font-semibold text-gray-700"
+                  class="px-2 py-2 text-right text-sm font-semibold text-gray-700 dark:text-slate-200"
                 >
                   ปริมาณ (กรัม)
                 </th>
                 <th
-                  class="px-2 py-2 text-right text-sm font-semibold text-gray-700"
+                  class="px-2 py-2 text-right text-sm font-semibold text-gray-700 dark:text-slate-200"
                 >
                   ต้นทุน (บาท)
                 </th>
@@ -552,7 +557,9 @@ const profitPerPiece = computed(() => {
                 <td colspan="2" class="px-2 py-3 text-right text-lg font-bold">
                   ต้นทุนวัตถุดิบรวม
                 </td>
-                <td class="px-2 py-3 text-right text-lg font-bold text-primary">
+                <td
+                  class="dark:text-primary-dark px-2 py-3 text-right text-lg font-bold text-primary"
+                >
                   {{
                     calculationResult.foodCost.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
@@ -568,7 +575,7 @@ const profitPerPiece = computed(() => {
 
       <div
         v-if="calculationResult"
-        class="mt-5 rounded-lg bg-white p-4 shadow-md"
+        class="mt-5 rounded-lg bg-white p-4 shadow-md dark:bg-gray-700"
       >
         <h3 class="mb-1 text-xl font-semibold text-secondary">
           ต้นทุนเพิ่มเติม
@@ -576,38 +583,43 @@ const profitPerPiece = computed(() => {
         <div class="mb-4 mt-4 grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700"
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-slate-200"
                 >ค่าแรง (บาท/ชม.)</label
               >
               <input
                 v-model.number="laborCostPerHour"
                 type="number"
-                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-slate-100 dark:text-gray-600"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700"
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-slate-200"
                 >เวลาที่ใช้ (ชม.)</label
               >
               <input
                 v-model.number="workHours"
                 type="number"
-                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-slate-100 dark:text-gray-600"
               />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700"
+              <label
+                class="block text-sm font-medium text-gray-700 dark:text-slate-200"
                 >ต้นทุนแฝง (%)</label
               >
               <input
                 v-model.number="overheadPercent"
                 type="number"
-                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-slate-100 dark:text-gray-600"
               />
             </div>
-            <div class="self-end pb-2 text-gray-600">% ของต้นทุนวัตถุดิบ</div>
+            <div class="self-end pb-2 text-gray-600 dark:text-slate-200">
+              % ของต้นทุนวัตถุดิบ
+            </div>
           </div>
         </div>
       </div>
@@ -615,7 +627,7 @@ const profitPerPiece = computed(() => {
       <!-- สรุปต้นทุนและกำหนดราคาขาย -->
       <div
         v-if="calculationResult"
-        class="mb-8 mt-5 rounded-lg bg-white p-4 shadow-md"
+        class="mb-8 mt-5 rounded-lg bg-white p-4 shadow-md dark:bg-gray-700"
       >
         <div>
           <h3 class="mb-4 text-xl font-semibold">สรุปต้นทุนและกำหนดราคาขาย</h3>
@@ -623,20 +635,21 @@ const profitPerPiece = computed(() => {
             class="grid grid-cols-1 gap-6 md:grid-cols-1 md:px-36 lg:grid-cols-1 lg:px-48"
           >
             <div>
-              <span class="text-xl font-bold text-primary"
+              <span
+                class="dark:text-primary-dark text-xl font-bold text-primary"
                 >ตั้งราคาขายต่อชิ้น
               </span>
               <input
                 type="number"
                 step="0.25"
                 v-model.number="finalSellingPricePerPiece"
-                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-center text-3xl font-bold text-secondary"
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-center text-3xl font-bold text-secondary dark:bg-slate-100"
               />
               <div class="mt-2 pl-1 text-xs">
                 - ราคาขายที่คำนวนมาเป็นราคา +{{ defaultProfitMargin }}%
                 จากต้นทุน<br />
                 - สามารถตั้งราคาใหม่ได้เพื่อดูกำไรที่ต้องการ
-                <div class="pr-1 text-xs text-red-600">
+                <div class="pr-1 text-xs text-red-600 dark:text-red-400">
                   - (ราคาขายต่ำกว่า {{ costPerPiece.toFixed(2) }} บาทจะขาดทุน)
                 </div>
               </div>
@@ -650,9 +663,11 @@ const profitPerPiece = computed(() => {
               class="flex items-center justify-between border-b pb-2 pt-2 text-base"
             >
               <div>
-                <span class="text-lg text-gray-700">ยอดขายทั้งหมด:</span>
+                <span class="text-lg text-gray-700 dark:text-slate-200"
+                  >ยอดขายทั้งหมด:</span
+                >
 
-                <div class="text-xs text-gray-600">
+                <div class="text-xs text-gray-600 dark:text-slate-200">
                   (จำนวนขนม {{ productionQuantity }} ชิ้น)
                 </div>
               </div>
@@ -670,11 +685,15 @@ const profitPerPiece = computed(() => {
               class="flex items-center justify-between border-b py-2 text-base"
             >
               <div>
-                <div class="font-medium text-gray-600">ต้นทุนรวมทั้งหมด:</div>
-                <div class="text-xs text-gray-600">(วัตถุดิบ+น้ำไฟ+ค่าแรง)</div>
+                <div class="font-medium text-gray-600 dark:text-slate-200">
+                  ต้นทุนรวมทั้งหมด:
+                </div>
+                <div class="text-xs text-gray-600 dark:text-slate-200">
+                  (วัตถุดิบ+น้ำไฟ+ค่าแรง)
+                </div>
               </div>
 
-              <span class="text-xl font-bold text-red-600"
+              <span class="text-xl font-bold text-red-600 dark:text-red-400"
                 >{{
                   totalCostWithOverhead.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
@@ -688,7 +707,9 @@ const profitPerPiece = computed(() => {
             <div
               class="flex items-center justify-between border-b py-2 text-base"
             >
-              <span class="font-medium text-gray-600">กำไรทั้งหมด:</span>
+              <span class="font-medium text-gray-600 dark:text-slate-200"
+                >กำไรทั้งหมด:</span
+              >
               <span class="text-2xl font-bold text-green-600"
                 >{{
                   totalProfit.toLocaleString('en-US', {
@@ -703,7 +724,9 @@ const profitPerPiece = computed(() => {
             <div
               class="flex items-center justify-between border-b py-2 text-base"
             >
-              <span class="text-gray-600">กำไรต่อชิ้น:</span>
+              <span class="text-gray-600 dark:text-slate-200"
+                >กำไรต่อชิ้น:</span
+              >
               <span class="text-lg font-bold text-green-600"
                 >{{
                   profitPerPiece.toLocaleString('en-US', {
@@ -728,7 +751,7 @@ const profitPerPiece = computed(() => {
       v-if="isSubRecipeModalOpen"
       @close="isSubRecipeModalOpen = false"
     >
-      <div v-if="subRecipeToShow" class="p-6">
+      <div v-if="subRecipeToShow" class="p-6 dark:bg-gray-600">
         <h3 class="mb-4 text-2xl font-semibold">
           ส่วนประกอบของ: {{ subRecipeToShow.name }}
         </h3>
@@ -741,7 +764,7 @@ const profitPerPiece = computed(() => {
         <div class="mt-6 text-right">
           <button
             @click="isSubRecipeModalOpen = false"
-            class="rounded-md bg-primary px-4 py-2 text-white"
+            class="dark:bg-primary-dark rounded-md bg-primary px-4 py-2 text-white dark:text-gray-600"
           >
             ปิด
           </button>

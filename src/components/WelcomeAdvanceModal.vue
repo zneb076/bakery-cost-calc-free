@@ -16,7 +16,7 @@ function close() {
       <h2 class="mb-4 text-2xl font-bold text-secondary">
         ยินดีต้อนรับสู่โหมด Advance!
       </h2>
-      <div class="space-y-3 text-gray-700">
+      <div class="space-y-3 text-gray-700 dark:text-slate-200">
         <p>
           โหมดนี้ปลดล็อกฟังก์ชันการวิเคราะห์ต้นทุนเชิงลึก
           เหมาะสำหรับผู้ที่ต้องการวางแผนธุรกิจอย่างจริงจัง
@@ -47,7 +47,9 @@ function close() {
         </div>
       </div>
 
-      <div class="mt-3 border-l-4 border-yellow-400 bg-yellow-50 p-3">
+      <div
+        class="mt-3 border-l-4 border-yellow-400 bg-yellow-50 p-3 dark:bg-gray-300"
+      >
         <p class="font-semibold text-yellow-800">สิ่งสำคัญที่ต้องรู้:</p>
         <p class="text-sm text-yellow-700">
           การคำนวณทั้งสองโหมดนี้จำเป็นต้องใช้ **"ต้นทุนคงที่รวมต่อเดือน"** (เช่น
@@ -64,7 +66,9 @@ function close() {
               v-model="dontShowAgain"
               class="h-4 w-4 rounded text-primary"
             />
-            <label for="dont-show" class="ml-2 text-sm text-gray-600"
+            <label
+              for="dont-show"
+              class="ml-2 text-sm text-gray-600 dark:text-slate-200"
               >ไม่ต้องแสดงอีก</label
             >
           </div>

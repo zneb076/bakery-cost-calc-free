@@ -5,16 +5,16 @@
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       <router-link
         :to="{ name: 'CalculatorOverhead' }"
-        class="block rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
+        class="block rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg dark:bg-gray-700"
       >
-        <div class="flex items-center space-x-4 py-4">
+        <div class="flex items-center space-x-4 py-4 dark:bg-gray-700">
           <font-awesome-icon
             icon="calculator"
             class="text-3xl text-secondary"
           />
           <div>
             <h2 class="text-xl font-semibold">คำนวณต้นทุนแฝง</h2>
-            <p class="mt-2 text-sm text-gray-500">
+            <p class="mt-2 text-sm text-gray-500 dark:text-slate-200">
               หาต้นทุนแฝงต่อชิ้นจากยอดขายและต้นทุนคงที่
             </p>
             <!-- <p class="mt-2 text-xs text-red-700">
@@ -27,13 +27,13 @@
 
       <router-link
         :to="{ name: 'CalculatorBreakEven' }"
-        class="block rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
+        class="block rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg dark:bg-gray-700"
       >
         <div class="flex items-center space-x-4 py-4">
           <font-awesome-icon icon="chart-pie" class="text-3xl text-secondary" />
           <div>
             <h2 class="text-xl font-semibold">หาจุดคุ้มทุน</h2>
-            <p class="mt-2 text-sm text-gray-500">
+            <p class="mt-2 text-sm text-gray-500 dark:text-slate-200">
               คำนวณว่าต้องขายเท่าไหร่ถึงจะเริ่มมีกำไร
             </p>
             <p class="mt-2 text-sm text-gray-500"></p>

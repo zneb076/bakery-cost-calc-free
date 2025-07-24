@@ -49,7 +49,7 @@ async function saveSettings() {
 </script>
 
 <template>
-  <div class="rounded-lg bg-white p-6 shadow-md">
+  <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-700">
     <h2 class="mb-4 text-2xl font-semibold">ตั้งค่าทั่วไป</h2>
     <div class="space-y-4">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -60,7 +60,7 @@ async function saveSettings() {
           <input
             type="number"
             v-model.number="settings.laborCostPerHour"
-            class="mt-1 w-full rounded-md border p-2"
+            class="mt-1 w-full rounded-md border p-2 dark:text-gray-600"
           />
         </div>
         <div>
@@ -70,7 +70,7 @@ async function saveSettings() {
           <input
             type="number"
             v-model.number="settings.workHours"
-            class="mt-1 w-full rounded-md border p-2"
+            class="mt-1 w-full rounded-md border p-2 dark:text-gray-600"
           />
         </div>
         <div>
@@ -80,7 +80,7 @@ async function saveSettings() {
           <input
             type="number"
             v-model.number="settings.overheadPercent"
-            class="mt-1 w-full rounded-md border p-2"
+            class="mt-1 w-full rounded-md border p-2 dark:text-gray-600"
           />
         </div>
         <div>
@@ -90,14 +90,14 @@ async function saveSettings() {
           <input
             type="number"
             v-model.number="settings.defaultProfitMargin"
-            class="mt-1 w-full rounded-md border p-2"
+            class="mt-1 w-full rounded-md border p-2 dark:text-gray-600"
           />
         </div>
       </div>
       <div class="mt-4 border-t pt-4 text-right">
         <button
           @click="saveSettings"
-          class="rounded-lg bg-primary px-4 py-2 font-bold text-white"
+          class="dark:bg-primary-dark rounded-lg bg-primary px-4 py-2 text-white dark:text-gray-600"
         >
           บันทึกการตั้งค่า
         </button>

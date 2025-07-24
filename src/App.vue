@@ -7,6 +7,9 @@ import { useFontSwitcher } from './composables/useFontSwitcher.js';
 import { useAppMode } from './composables/useAppMode.js';
 import { useAdvanceWelcome } from './composables/useAdvanceWelcome.js';
 import WelcomeAdvanceModal from './components/WelcomeAdvanceModal.vue';
+import { useThemeSwitcher } from './composables/useThemeSwitcher.js';
+
+useThemeSwitcher();
 
 const { loadInitialFont, toggleFont } = useFontSwitcher();
 const { currentMode } = useAppMode();
@@ -21,7 +24,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 text-gray-800">
+  <div
+    class="min-h-screen bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+  >
     <Navbar @toggle-font="toggleFont" />
 
     <main class="lg:ml-[310px]">

@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useAppMode } from '../composables/useAppMode.js';
 import ToggleSwitch from './ToggleSwitch.vue';
+import ThemeSwitcher from './ThemeSwitcher.vue';
 
 const { currentMode, toggleMode } = useAppMode();
 
@@ -63,13 +64,14 @@ const emit = defineEmits(['toggle-font']);
       class="sticky top-0 z-40 bg-primary text-white shadow-md lg:ml-[310px]"
     >
       <div
-        class="container mx-auto flex h-16 items-center justify-between px-3"
+        class="dark:bg-primary-dark container mx-auto flex h-16 items-center justify-between px-3"
       >
         <router-link :to="{ name: 'Home' }" class="text-2xl font-semibold">
           Bakery Cost Calc
         </router-link>
 
         <div class="flex items-center space-x-4">
+          <ThemeSwitcher />
           <button
             @click="$emit('toggle-font')"
             class="transition-colors hover:text-gray-200"

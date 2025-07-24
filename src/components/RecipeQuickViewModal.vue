@@ -135,47 +135,55 @@ const totalProductionCost = computed(() => {
 </script>
 
 <template>
-  <div class="p-6">
+  <div class="p-6 dark:bg-gray-700">
     <h3 class="mb-4 text-2xl font-semibold">
-      <span class="text-primary">{{ recipe.name }}</span>
+      <span class="dark:text-primary-dark text-primary">{{ recipe.name }}</span>
     </h3>
 
-    <div class="mb-4 grid grid-cols-2 gap-4 rounded-md bg-gray-50 p-4">
+    <div
+      class="mb-4 grid grid-cols-2 gap-4 rounded-md bg-gray-50 p-4 dark:bg-gray-600"
+    >
       <div>
-        <label class="block text-sm font-medium text-gray-700"
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-slate-200"
           >จำนวนชิ้นที่จะทำ</label
         >
         <input
           type="number"
           v-model.number="numberOfPieces"
-          class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+          class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-100 dark:text-gray-600"
           placeholder="เช่น 100"
         />
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700"
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-slate-200"
           >ขนาดต่อชิ้น (กรัม)</label
         >
         <input
           type="number"
           v-model.number="sizePerPiece"
-          class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+          class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 dark:bg-gray-100 dark:text-gray-600"
           placeholder="เช่น 50"
         />
       </div>
-      <div class="col-span-2 rounded-md bg-white p-2 text-center">
+      <div
+        class="col-span-2 rounded-md bg-white p-2 text-center dark:bg-slate-100"
+      >
         <span class="text-gray-600">
           {{
             isCalculationActive ? 'ปริมาณที่จะทำทั้งหมด:' : 'ปริมาณสูตรพื้นฐาน:'
           }}
         </span>
-        <span class="ml-2 text-lg font-bold">{{
+        <span class="ml-2 text-lg font-bold dark:text-gray-600">{{
           totalProductionWeight.toLocaleString('en-US', {
             maximumFractionDigits: 2,
           })
         }}</span>
         <span class="text-gray-600"> กรัม</span>
-        <div class="col-span-2 rounded-md bg-white p-2 text-center">
+        <div
+          class="col-span-2 rounded-md bg-white p-2 text-center dark:bg-slate-100"
+        >
           <span class="text-gray-600">
             {{
               isCalculationActive

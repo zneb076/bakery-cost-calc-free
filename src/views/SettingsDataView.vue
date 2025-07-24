@@ -194,12 +194,12 @@ async function deleteAllData() {
   <div>
     <div class="flex flex-col gap-8 md:flex-row">
       <main class="flex-grow">
-        <div class="rounded-lg bg-white p-6 shadow-md">
+        <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-700">
           <h2 class="mb-4 text-2xl font-semibold">สำรองและนำเข้าข้อมูล</h2>
           <div class="space-y-4">
             <div>
               <h3 class="font-semibold">สำรองข้อมูล (Backup)</h3>
-              <p class="mb-2 text-sm text-gray-500">
+              <p class="mb-2 text-sm text-gray-500 dark:text-slate-200">
                 บันทึกข้อมูลวัตถุดิบและสูตรทั้งหมดของคุณเป็นไฟล์ `.json`
               </p>
               <button
@@ -212,8 +212,10 @@ async function deleteAllData() {
             <hr />
             <div>
               <h3 class="font-semibold">นำเข้าข้อมูล (Restore)</h3>
-              <p class="mb-2 text-sm text-gray-500">
-                <span class="font-bold text-red-500">คำเตือน:</span>
+              <p class="mb-2 text-sm text-gray-500 dark:text-slate-200">
+                <span class="font-bold text-red-500 dark:text-red-500"
+                  >คำเตือน:</span
+                >
                 การนำเข้าข้อมูลจะลบข้อมูลปัจจุบันทั้งหมดทิ้ง
               </p>
               <button
@@ -234,8 +236,10 @@ async function deleteAllData() {
             <hr />
             <div>
               <h3 class="font-semibold">ข้อมูลตัวอย่าง</h3>
-              <p class="mb-2 text-sm text-gray-500">
-                <span class="font-bold text-red-500">คำเตือน:</span>
+              <p class="mb-2 text-sm text-gray-500 dark:text-slate-200">
+                <span class="font-bold text-red-500 dark:text-red-500"
+                  >คำเตือน:</span
+                >
                 หากมีข้อมูลอยู่แล้ว
                 ข้อมูลทั้งหมดจะถูกลบและแทนที่ด้วยข้อมูลเริ่มต้น
               </p>
@@ -249,15 +253,15 @@ async function deleteAllData() {
 
             <hr />
             <div>
-              <h3 class="font-semibold text-red-600">
+              <h3 class="font-semibold text-red-600 dark:text-red-500">
                 ลบข้อมูลทั้งหมด (การกระทำที่ไม่สามารถย้อนกลับได้)
               </h3>
-              <p class="mb-2 text-sm text-gray-500">
+              <p class="mb-2 text-sm text-gray-500 dark:text-slate-200">
                 ล้างข้อมูลวัตถุดิบและสูตรทั้งหมดในฐานข้อมูลของคุณเพื่อเริ่มต้นใหม่ทั้งหมด
               </p>
               <button
                 @click="deleteAllData"
-                class="rounded-lg bg-red-600 px-4 py-2 font-bold text-white"
+                class="rounded-lg bg-red-600 px-4 py-2 font-bold text-white dark:bg-red-500"
               >
                 ลบข้อมูลทั้งหมด
               </button>

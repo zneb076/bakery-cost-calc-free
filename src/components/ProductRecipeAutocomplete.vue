@@ -64,7 +64,7 @@ function handleBlur() {
       @focus="showOptions = true"
       @blur="handleBlur"
       @keydown="handleKeydown"
-      class="w-full rounded-md border border-gray-300 px-3 py-2 pr-8"
+      class="w-full rounded-md border border-gray-300 px-3 py-2 pr-8 dark:text-gray-600"
     />
     <button
       v-if="modelValue"
@@ -86,7 +86,7 @@ function handleBlur() {
           v-for="option in group.options"
           :key="option.value"
           @mousedown.prevent="selectOption(option)"
-          class="cursor-pointer px-4 py-2 hover:bg-gray-100"
+          class="cursor-pointer px-4 py-2 hover:bg-gray-100 dark:text-gray-500 hover:dark:bg-slate-200"
         >
           {{ option.label }}
         </li>

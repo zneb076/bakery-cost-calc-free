@@ -2,6 +2,7 @@ const defaultTheme = require('tailwindcss/defaultTheme');
 
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   theme: {
     extend: {
@@ -14,7 +15,9 @@ export default {
       },
       colors: {
         primary: '#ff7081',
+        'primary-dark': '#f7bbc1',
         secondary: '#0084C5',
+        'secondary-dark': '#38bdf8',
       },
     },
     screens: {

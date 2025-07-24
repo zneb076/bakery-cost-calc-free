@@ -103,13 +103,14 @@ function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <div class="p-6">
+    <div class="p-6 dark:bg-gray-700">
       <h3 class="mb-4 text-2xl font-semibold">
         {{ initialData.id ? 'แก้ไขวัตถุดิบ' : 'เพิ่มวัตถุดิบใหม่' }}
       </h3>
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700"
+          <label
+            class="block text-sm font-medium text-gray-700 dark:text-slate-200"
             >ชื่อวัตถุดิบ</label
           >
           <CustomAutocomplete
@@ -134,7 +135,7 @@ function handleSubmit() {
               @keydown.enter.prevent="focusNext('quantity-input')"
               type="number"
               step="0.01"
-              class="mt-1 w-full rounded-md border p-2"
+              class="mt-1 w-full rounded-md border p-2 dark:bg-gray-300 dark:text-gray-600"
             />
           </div>
           <div>
@@ -144,7 +145,7 @@ function handleSubmit() {
               v-model.number="formData.purchaseQuantity"
               @keydown.enter.prevent="focusNext('unit-input')"
               type="number"
-              class="mt-1 w-full rounded-md border p-2"
+              class="mt-1 w-full rounded-md border p-2 dark:bg-gray-300 dark:text-gray-600"
             />
           </div>
         </div>
@@ -156,7 +157,7 @@ function handleSubmit() {
             v-model="formData.purchaseUnit"
             @keydown.enter.prevent
             type="text"
-            class="mt-1 w-full rounded-md border p-2"
+            class="mt-1 w-full rounded-md border p-2 dark:bg-gray-300 dark:text-slate-500"
           />
         </div>
 
@@ -173,10 +174,10 @@ function handleSubmit() {
         </div>
 
         <div class="mt-4 border-t pt-4">
-          <h4 class="mb-2 font-semibold text-gray-800">
+          <h4 class="mb-2 font-semibold text-gray-800 dark:text-slate-300">
             การตั้งค่าต้นทุน (ทางเลือก)
           </h4>
-          <p class="mb-4 text-xs text-gray-500">
+          <p class="mb-4 text-xs text-gray-500 dark:text-slate-300">
             ส่วนนี้เป็นค่าที่ตั้งไว้ล่วงหน้าเพื่อการคำนวณที่แม่นยำขึ้น
             หากไม่ต้องการใช้งาน สามารถข้ามไปได้เลย
           </p>
@@ -189,13 +190,13 @@ function handleSubmit() {
               type="number"
               min="0"
               max="100"
-              class="mt-1 w-full rounded-md border p-2"
+              class="mt-1 w-full rounded-md border p-2 dark:bg-gray-300 dark:text-gray-600"
             />
-            <p class="mt-1 text-xs text-gray-500">
+            <p class="mt-1 text-xs text-gray-500 dark:text-slate-300">
               คือเปอร์เซ็นต์ของวัตถุดิบที่ใช้ได้จริงหลังการเตรียม เช่น
               กล้วยหอมซื้อมา 100g ปอกเปลือกแล้วเหลือเนื้อกล้วยที่ใช้ได้ 80g
               ให้ใส่ Yield เป็น 80 <br />
-              <span class="text-green-700"
+              <span class="text-slate-300"
                 >วิธีคิด <br />(น้ำหนักที่เหลือ x 100) / น้ำหนักที่ซื้อมา
                 <br />= ค่า Yield ที่เอาไปกรอก</span
               >
@@ -215,13 +216,15 @@ function handleSubmit() {
                 for="costByWholeUnit"
                 class="ml-2 block text-sm"
                 :class="
-                  shouldDisableCostByUnit ? 'text-gray-400' : 'text-gray-900'
+                  shouldDisableCostByUnit
+                    ? 'text-gray-400'
+                    : 'text-gray-900 dark:text-slate-200'
                 "
               >
                 2. คิดต้นทุนเต็มหน่วยเสมอ
               </label>
             </div>
-            <p class="ml-6 mt-1 text-xs text-gray-500">
+            <p class="ml-6 mt-1 text-xs text-gray-500 dark:text-slate-300">
               ใช้สำหรับวัตถุดิบที่ต้องใช้ทั้งหน่วยเสมอ เช่น ไข่ไก่ 1 ฟอง
               (60กรัม) แต่ในสูตรเราใช้แค่ 25กรัม ที่เหลือเก็บไม่ได้ต้องทิ้ง
               เราก็จะติ้กช่องนี้
@@ -230,7 +233,9 @@ function handleSubmit() {
         </div>
       </div>
     </div>
-    <div class="flex justify-end space-x-3 rounded-b-lg bg-gray-50 px-6 py-3">
+    <div
+      class="flex justify-end space-x-3 rounded-b-lg bg-gray-50 px-6 py-3 dark:bg-gray-800"
+    >
       <button
         type="button"
         @click="emit('cancel')"
@@ -240,7 +245,7 @@ function handleSubmit() {
       </button>
       <button
         type="submit"
-        class="rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-opacity-90"
+        class="dark:bg-primary-dark rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-opacity-90 dark:text-gray-600"
       >
         บันทึก
       </button>

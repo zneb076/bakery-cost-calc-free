@@ -188,14 +188,15 @@ function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <div class="p-2">
+    <div class="p-2 dark:bg-gray-600">
       <h3 class="mb-6 text-2xl font-semibold">
         {{ recipe.id ? 'แก้ไขสูตร' : 'เพิ่มสูตรใหม่' }}
       </h3>
       <div class="space-y-6">
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label class="block text-sm font-medium text-gray-700"
+            <label
+              class="block text-sm font-medium text-gray-700 dark:text-slate-200"
               >ชื่อสูตร</label
             >
             <input
@@ -203,7 +204,7 @@ function handleSubmit() {
               @keydown.enter.prevent="handleEnterOnName"
               placeholder="ชื่อสูตร"
               type="text"
-              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm dark:text-gray-600"
             />
           </div>
           <div class="flex items-end pb-2">
@@ -213,35 +214,39 @@ function handleSubmit() {
                 type="checkbox"
                 class="h-4 w-4 rounded border-gray-300 text-primary"
               />
-              <label class="ml-2 block text-sm text-gray-900"
+              <label
+                class="ml-2 block text-sm text-gray-900 dark:text-slate-200"
                 >เป็นสูตรย่อย</label
               >
             </div>
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700"
+          <label
+            class="block text-sm font-medium text-gray-700 dark:text-slate-200"
             >โน้ต / วิธีทำ</label
           >
           <textarea
             v-model="recipe.notes"
             rows="4"
-            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
+            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm dark:text-gray-600"
             placeholder="ใส่รายละเอียดวิธีทำหรือข้อความเตือนความจำ..."
           ></textarea>
         </div>
         <div class="border-t pt-6">
-          <h4 class="text-lg font-medium">รายการวัตถุดิบ</h4>
+          <h4 class="text-lg font-medium dark:text-slate-200">
+            รายการวัตถุดิบ
+          </h4>
           <div
             class="mx-2 mb-4 mt-2 flex items-center space-x-4 text-xs text-gray-500"
           >
             <div class="flex items-center space-x-1">
               <span class="h-2.5 w-2.5 rounded-full bg-gray-400"></span>
-              <span>ต้นทุนปกติ</span>
+              <span class="dark:text-slate-200">ต้นทุนปกติ</span>
             </div>
             <div class="flex items-center space-x-1">
               <span class="h-2.5 w-2.5 rounded-full bg-green-500"></span>
-              <span>มีการคิดต้นทุนเพิ่มเติม</span>
+              <span class="dark:text-slate-200">มีการคิดต้นทุนเพิ่มเติม</span>
             </div>
           </div>
 
@@ -275,7 +280,7 @@ function handleSubmit() {
                     @update:model-value="item.name = $event"
                     :options="autocompleteOptions"
                     @selection-made="onIngredientSelect(index)"
-                    class="flex-grow"
+                    class="flex-grow dark:bg-slate-200"
                   ></CustomAutocomplete>
                 </div>
                 <input
@@ -311,7 +316,7 @@ function handleSubmit() {
                   <input
                     v-model.number="item.yield"
                     type="number"
-                    class="mt-1 w-24 rounded-md border p-1"
+                    class="mt-1 w-24 rounded-md border p-1 dark:text-gray-600"
                   />
                 </div>
                 <div class="flex items-center pt-5">
@@ -340,22 +345,27 @@ function handleSubmit() {
           <button
             @click="addIngredientRow"
             type="button"
-            class="mt-4 font-semibold text-primary"
+            class="dark:text-primary-dark mt-4 font-semibold text-primary"
           >
             + เพิ่มวัตถุดิบ
           </button>
         </div>
       </div>
     </div>
-    <div class="flex justify-end space-x-3 rounded-b-lg bg-gray-50 px-6 py-3">
+    <div
+      class="flex justify-end space-x-3 rounded-b-lg bg-gray-50 px-6 py-3 dark:bg-gray-700"
+    >
       <button
         type="button"
         @click="emit('cancel')"
-        class="rounded-md border border-gray-300 bg-white px-4 py-2"
+        class="rounded-md border border-gray-300 bg-white px-4 py-2 dark:text-gray-600"
       >
         ยกเลิก
       </button>
-      <button type="submit" class="rounded-md bg-primary px-4 py-2 text-white">
+      <button
+        type="submit"
+        class="dark:bg-primary-dark rounded-md bg-primary px-4 py-2 text-white dark:text-gray-600"
+      >
         บันทึก
       </button>
     </div>

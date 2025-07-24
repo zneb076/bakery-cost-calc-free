@@ -33,7 +33,7 @@ onUnmounted(() => {
     <button
       v-if="isVisible"
       @click="scrollToTop"
-      class="fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-opacity-80"
+      class="dark:bg-primary-dark fixed bottom-5 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-opacity-80 dark:text-slate-700"
       aria-label="Scroll to top"
     >
       <font-awesome-icon icon="arrow-up" size="lg" />

@@ -45,7 +45,7 @@ function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <div class="p-6">
+    <div class="p-6 dark:bg-gray-600">
       <h3 class="mb-4 text-xl font-semibold">
         {{ product.id ? 'แก้ไขรายการขนม' : 'เพิ่มรายการขนมใหม่จากสูตรนี้' }}
       </h3>
@@ -55,7 +55,7 @@ function handleSubmit() {
           <input
             v-model="product.name"
             type="text"
-            class="mt-1 w-full rounded-md border p-2"
+            class="mt-1 w-full rounded-md border p-2 dark:text-gray-600"
           />
         </div>
         <div>
@@ -64,7 +64,7 @@ function handleSubmit() {
             v-model="product.recipeId"
             :options="recipeOptions"
             placeholder="เลือกสูตรตั้งต้น"
-            class="mt-1"
+            class="mt-1 dark:text-gray-600"
           />
         </div>
         <div class="grid grid-cols-2 gap-4">
@@ -75,7 +75,7 @@ function handleSubmit() {
             <input
               v-model.number="product.weight"
               type="number"
-              class="mt-1 w-full rounded-md border p-2"
+              class="mt-1 w-full rounded-md border p-2 dark:text-gray-600"
             />
           </div>
           <div>
@@ -83,21 +83,26 @@ function handleSubmit() {
             <input
               v-model.number="product.price"
               type="number"
-              class="mt-1 w-full rounded-md border p-2"
+              class="mt-1 w-full rounded-md border p-2 dark:text-gray-600"
             />
           </div>
         </div>
       </div>
     </div>
-    <div class="flex justify-end space-x-3 bg-gray-50 px-6 py-3">
+    <div
+      class="flex justify-end space-x-3 bg-gray-50 px-6 py-3 dark:bg-gray-600"
+    >
       <button
         type="button"
         @click="emit('cancel')"
-        class="rounded-md border bg-white px-4 py-2"
+        class="rounded-md border bg-white px-4 py-2 dark:text-gray-600"
       >
         ยกเลิก
       </button>
-      <button type="submit" class="rounded-md bg-primary px-4 py-2 text-white">
+      <button
+        type="submit"
+        class="dark:bg-primary-dark rounded-md bg-primary px-4 py-2 text-white dark:text-gray-600"
+      >
         บันทึก
       </button>
     </div>

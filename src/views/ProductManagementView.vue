@@ -114,14 +114,14 @@ function getRecipeName(recipeId) {
 </script>
 
 <template>
-  <div class="rounded-lg bg-white p-4 shadow-md">
+  <div class="rounded-lg bg-white p-4 shadow-md dark:bg-gray-700">
     <div
       class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center"
     >
       <h1 class="text-3xl font-bold">จัดการสินค้า (ขนม)</h1>
       <button
         @click="openAddModal"
-        class="rounded-lg bg-primary px-4 py-2 text-white"
+        class="dark:bg-primary-dark rounded-lg bg-primary px-4 py-2 text-white dark:text-gray-600"
       >
         + เพิ่มราการขนมใหม่
       </button>
@@ -130,7 +130,7 @@ function getRecipeName(recipeId) {
           type="text"
           v-model="searchQuery"
           placeholder="ค้นหารายการขนม..."
-          class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10"
+          class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 dark:text-gray-600"
         />
         <button
           v-if="searchQuery"
@@ -142,9 +142,9 @@ function getRecipeName(recipeId) {
       </div>
     </div>
 
-    <div class="overflow-hidden rounded-lg bg-white shadow-sm">
+    <div class="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-500">
       <table class="mb-[100px] min-w-full">
-        <thead class="bg-gray-100">
+        <thead class="bg-gray-100 dark:bg-gray-800">
           <tr>
             <th class="w-full px-4 py-2 text-left">ชื่อสินค้า</th>
             <th class="px-4 py-2 text-center">จัดการ</th>
@@ -159,12 +159,14 @@ function getRecipeName(recipeId) {
         </tbody>
         <tbody v-else>
           <template v-for="product in filteredProducts" :key="product.id">
-            <tr class="border-b hover:bg-gray-50">
+            <tr
+              class="border-b hover:bg-gray-50 dark:border-b-gray-400 dark:bg-gray-500 hover:dark:bg-gray-400"
+            >
               <td class="px-4 py-3">{{ product.name }}</td>
               <td class="px-4 py-3">
                 <div class="flex items-center justify-center space-x-3">
                   <button
-                    class="text-gray-500 transition-colors hover:text-green-600"
+                    class="text-gray-500 transition-colors hover:text-green-600 dark:text-slate-200"
                     @click="toggleRow(product.id)"
                   >
                     <font-awesome-icon icon="eye" />
@@ -174,7 +176,7 @@ function getRecipeName(recipeId) {
                       name: 'Calculator',
                       query: { productId: product.id },
                     }"
-                    class="text-gray-500 hover:text-yellow-600"
+                    class="text-gray-500 hover:text-yellow-600 dark:text-slate-200"
                     title="คำนวณต้นทุน (Basic)"
                   >
                     <font-awesome-icon icon="calculator" size="lg" />
@@ -199,7 +201,7 @@ function getRecipeName(recipeId) {
               </td>
             </tr>
             <tr v-if="expandedRowId === product.id">
-              <td colspan="2" class="bg-gray-50 p-4 text-sm">
+              <td colspan="2" class="bg-gray-50 p-4 text-sm dark:bg-gray-600">
                 <ul class="space-y-1">
                   <li>
                     <strong>มาจากสูตร:</strong>

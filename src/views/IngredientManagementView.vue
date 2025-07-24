@@ -116,13 +116,13 @@ onMounted(fetchIngredients);
 
 <template>
   <div>
-    <div class="rounded-lg bg-white p-4 shadow-md">
+    <div class="rounded-lg bg-white p-4 shadow-md dark:bg-gray-700">
       <div class="overflow-x-auto">
         <div class="mb-6 flex items-center justify-between">
           <h1 class="text-2xl font-bold">วัตถุดิบ</h1>
           <button
             @click="openAddModal"
-            class="rounded-lg bg-primary px-4 py-2 text-white transition-opacity hover:bg-opacity-90"
+            class="dark:bg-primary-dark rounded-lg bg-primary px-4 py-2 text-white transition-opacity hover:bg-opacity-90 dark:text-slate-700"
           >
             + เพิ่มวัตถุดิบใหม่
           </button>
@@ -132,7 +132,7 @@ onMounted(fetchIngredients);
             type="text"
             v-model="searchQuery"
             placeholder="ค้นหาวัตถุดิบ..."
-            class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10"
+            class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 dark:border-gray-300 dark:bg-slate-200 dark:text-gray-600"
           />
           <button
             v-if="searchQuery"
@@ -142,11 +142,13 @@ onMounted(fetchIngredients);
             <font-awesome-icon icon="xmark" />
           </button>
         </div>
-        <table class="min-w-full bg-white">
+        <table class="min-w-full bg-white dark:bg-gray-700">
           <thead class="bg-gray-100">
-            <tr>
+            <tr class="dark:bg-gray-600">
               <th class="px-4 py-2 text-left">ชื่อวัตถุดิบ</th>
-              <th class="px-4 py-2 text-right font-semibold text-primary">
+              <th
+                class="dark:text-primary-dark px-4 py-2 text-right font-semibold text-primary"
+              >
                 ราคาต่อกรัม (บาท)
               </th>
               <th class="px-4 py-2 text-center">จัดการ</th>
@@ -161,10 +163,12 @@ onMounted(fetchIngredients);
             <tr
               v-for="ingredient in filteredIngredients"
               :key="ingredient.id"
-              class="border-b hover:bg-gray-50"
+              class="border-b hover:bg-gray-50 dark:border-b-gray-600 hover:dark:bg-slate-200 hover:dark:text-gray-700"
             >
               <td class="px-4 py-2">{{ ingredient.name }}</td>
-              <td class="px-4 py-2 text-right font-semibold text-primary">
+              <td
+                class="dark:text-primary-dark px-4 py-2 text-right font-semibold text-primary"
+              >
                 {{
                   ingredient.costPerGram
                     ? ingredient.costPerGram.toFixed(2)

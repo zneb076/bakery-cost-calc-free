@@ -441,7 +441,7 @@ async function deleteGroup(id, name) {
     <div v-else>
       <div
         ref="liveCalculatorSection"
-        class="mb-6 rounded-lg bg-white p-4 shadow-md"
+        class="mb-6 rounded-lg bg-white p-4 shadow-md dark:bg-gray-700"
       >
         <h1 class="mb-6 text-3xl font-bold">คำนวณหาจุดคุ้มทุน</h1>
         <div class="border-t pt-4">
@@ -452,7 +452,7 @@ async function deleteGroup(id, name) {
             <input
               v-model.number="fixedCosts"
               type="number"
-              class="mt-1 w-full rounded-md border p-2 md:w-1/2"
+              class="mt-1 w-full rounded-md border p-2 md:w-1/2 dark:bg-slate-100 dark:text-gray-600"
             />
           </div>
           <h4 class="mb-2 font-semibold">รายการสินค้า</h4>
@@ -460,7 +460,7 @@ async function deleteGroup(id, name) {
             <div
               v-for="(item, index) in liveProducts"
               :key="index"
-              class="rounded-lg bg-gray-50 p-3"
+              class="rounded-lg bg-gray-50 p-3 dark:bg-gray-400"
             >
               <div class="flex items-end space-x-2">
                 <div class="flex-grow">
@@ -471,7 +471,7 @@ async function deleteGroup(id, name) {
                     v-model="item.productId"
                     :options="productOptions"
                     placeholder="เลือกสินค้า"
-                    class="mt-1"
+                    class="mt-1 dark:bg-slate-100 dark:text-gray-600"
                   />
                 </div>
                 <div class="w-24 flex-shrink-0">
@@ -482,13 +482,13 @@ async function deleteGroup(id, name) {
                     v-model.number="item.salesMix"
                     type="number"
                     placeholder="สัดส่วน"
-                    class="mt-1 w-24 rounded-md border p-2"
+                    class="mt-1 w-24 rounded-md border p-2 dark:text-gray-600"
                   />
                 </div>
                 <button
                   @click="removeLiveProductRow(index)"
                   type="button"
-                  class="flex h-5 w-5 flex-shrink-0 items-center justify-center py-5 text-red-500"
+                  class="flex h-5 w-5 flex-shrink-0 items-center justify-center py-5 text-red-500 dark:text-red-400"
                 >
                   <font-awesome-icon icon="trash" />
                 </button>
@@ -499,7 +499,7 @@ async function deleteGroup(id, name) {
             <button
               @click="addLiveProductRow"
               type="button"
-              class="font-semibold text-primary"
+              class="dark:text-primary-dark font-semibold text-primary"
             >
               + เพิ่มสินค้า
             </button>
@@ -519,7 +519,7 @@ async function deleteGroup(id, name) {
             </button>
             <button
               @click="calculateFromLive"
-              class="rounded-lg bg-primary px-4 py-2 text-white"
+              class="dark:bg-primary-dark rounded-lg bg-primary px-4 py-2 text-white dark:text-gray-600"
             >
               คำนวณ
             </button>
@@ -527,12 +527,12 @@ async function deleteGroup(id, name) {
         </div>
       </div>
 
-      <div class="rounded-lg bg-white p-6 shadow-md">
+      <div class="rounded-lg bg-white p-6 shadow-md dark:bg-gray-700">
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-2xl font-semibold">กลุ่มที่บันทึกไว้</h2>
           <button
             @click="openAddGroupModal"
-            class="rounded-md bg-gray-200 px-4 py-2 text-sm hover:bg-gray-300"
+            class="rounded-md bg-gray-200 px-4 py-2 text-sm hover:bg-gray-300 dark:text-gray-600"
           >
             + สร้างกลุ่มใหม่
           </button>
@@ -551,7 +551,7 @@ async function deleteGroup(id, name) {
             >
               <td class="py-2">
                 <p class="font-semibold">{{ group.name }}</p>
-                <p class="text-xs text-gray-500">
+                <p class="text-xs text-gray-500 dark:text-slate-200">
                   ประกอบด้วย:
                   {{
                     group.products
@@ -561,7 +561,9 @@ async function deleteGroup(id, name) {
                 </p>
               </td>
               <td class="space-x-2 py-2 text-right">
-                <div class="flex flex-col items-center gap-4">
+                <div
+                  class="flex flex-col items-center gap-4 dark:text-gray-600"
+                >
                   <button
                     @click="loadGroupToLive(group)"
                     class="rounded bg-gray-200 px-3 py-1 text-sm hover:bg-gray-300"
@@ -592,12 +594,14 @@ async function deleteGroup(id, name) {
       <div
         ref="resultsSection"
         v-if="calculationResult"
-        class="mt-6 space-y-6 rounded-lg bg-white p-6 shadow-md"
+        class="mt-6 space-y-6 rounded-lg bg-white p-6 shadow-md dark:bg-gray-700"
       >
         <div class="flex items-center justify-between">
           <h2 class="text-2xl font-semibold">
             ผลการคำนวณ:<br />
-            <span class="text-primary">{{ calculationResult.groupName }}</span>
+            <span class="dark:text-primary-dark text-primary">{{
+              calculationResult.groupName
+            }}</span>
           </h2>
           <button
             @click="isStepsModalOpen = true"
@@ -609,8 +613,8 @@ async function deleteGroup(id, name) {
         </div>
         <div>
           <h3 class="mb-2 font-semibold">รายละเอียดต้นทุนและกำไรต่อหน่วย</h3>
-          <table class="min-w-full border text-sm">
-            <thead class="bg-gray-100">
+          <table class="min-w-full border text-sm dark:border-gray-700">
+            <thead class="bg-gray-100 dark:bg-gray-800">
               <tr>
                 <th class="px-3 py-2 text-left">สินค้า</th>
                 <th class="px-3 py-2 text-right">ราคาขาย</th>
@@ -622,7 +626,7 @@ async function deleteGroup(id, name) {
               <tr
                 v-for="p in calculationResult.productDetails"
                 :key="p.productId"
-                class="border-b"
+                class="border-b dark:border-b-gray-600"
               >
                 <td class="px-3 py-2">{{ p.name }}</td>
                 <td class="px-3 py-2 text-right">
@@ -669,8 +673,8 @@ async function deleteGroup(id, name) {
           </li>
         </ul>
         <h3 class="mb-2 font-semibold">ตารางคาดการณ์กำไร</h3>
-        <table class="min-w-full border">
-          <thead class="bg-gray-100">
+        <table class="min-w-full rounded-md">
+          <thead class="bg-gray-100 dark:bg-gray-800">
             <tr>
               <th class="px-4 py-2 text-right">จำนวนขายรวม (หน่วยผสม)</th>
               <th class="px-4 py-2 text-right">ยอดขาย (บาท)</th>
@@ -684,7 +688,7 @@ async function deleteGroup(id, name) {
             >
               <tr
                 @click="toggleProjectionDetails(index)"
-                class="cursor-pointer border-b hover:bg-gray-100"
+                class="cursor-pointer border-b hover:bg-gray-100 dark:border-b-gray-500 hover:dark:bg-slate-300 hover:dark:text-gray-600"
               >
                 <td class="px-4 py-2 text-right">
                   {{ proj.units.toLocaleString() }}
@@ -710,7 +714,7 @@ async function deleteGroup(id, name) {
                 </td>
               </tr>
               <tr v-if="expandedProjectionIndex === index">
-                <td colspan="3" class="bg-gray-50 p-4">
+                <td colspan="3" class="bg-gray-50 p-4 dark:bg-gray-600">
                   <p class="mb-2 text-sm font-semibold">
                     รายละเอียดจำนวนขายโดยประมาณ:
                   </p>

@@ -185,14 +185,14 @@ async function handleProductSave(productData) {
 
 <template>
   <div>
-    <div class="rounded-lg bg-white p-3 pb-8 shadow-md">
+    <div class="rounded-lg bg-white p-3 pb-8 shadow-md dark:bg-gray-700">
       <div class="overflow-x-auto">
         <div class="mb-6 flex items-center justify-between">
           <h1 class="text-2xl font-bold">จัดการสูตรขนม</h1>
 
           <button
             @click="openAddModal"
-            class="rounded-lg bg-primary px-4 py-2 text-white transition-opacity hover:bg-opacity-90"
+            class="dark:bg-primary-dark rounded-lg bg-primary px-4 py-2 text-white transition-opacity hover:bg-opacity-90 dark:text-gray-600"
           >
             + เพิ่มสูตรใหม่
           </button>
@@ -202,7 +202,7 @@ async function handleProductSave(productData) {
             type="text"
             v-model="searchQuery"
             placeholder="ค้นหาสูตร..."
-            class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10"
+            class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 dark:bg-slate-200 dark:text-gray-600"
           />
           <button
             v-if="searchQuery"
@@ -212,8 +212,8 @@ async function handleProductSave(productData) {
             <font-awesome-icon icon="xmark" />
           </button>
         </div>
-        <table class="mb-[120px] min-w-full bg-white">
-          <thead class="bg-gray-100">
+        <table class="mb-[120px] min-w-full bg-white dark:bg-gray-700">
+          <thead class="bg-gray-100 dark:bg-gray-600">
             <tr>
               <th class="px-4 py-2 text-left">ชื่อสูตร</th>
               <th class="px-4 py-2 text-center">จัดการ</th>
@@ -228,7 +228,7 @@ async function handleProductSave(productData) {
             <tr
               v-for="recipe in filteredRecipes"
               :key="recipe.id"
-              class="border-b hover:bg-gray-50"
+              class="border-b hover:bg-gray-50 hover:dark:bg-slate-200 hover:dark:text-gray-600"
             >
               <td class="px-2 py-2">
                 {{ recipe.name }}
