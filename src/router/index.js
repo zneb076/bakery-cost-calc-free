@@ -5,8 +5,7 @@ import HomeView from '../views/HomeView.vue';
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: HomeView,
+    redirect: '/home', // ถ้าเข้ามาที่ path ว่างๆ ให้ไปที่ /home
   },
   {
     path: '/home',
