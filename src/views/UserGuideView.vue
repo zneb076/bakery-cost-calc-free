@@ -5,6 +5,24 @@
       เริ่มต้นใช้งาน "ขออีกคำ" ง่ายๆ ตามขั้นตอนต่อไปนี้
     </p>
 
+    <div
+      class="mb-6 rounded-lg border-2 border-dashed border-secondary p-4 text-center"
+    >
+      <div class="text-sm text-gray-600">
+        คุณสามารถโหลดข้อมูลตัวอย่าง (วัตถุดิบและสูตร) เพื่อทดลองเล่นได้ที่หน้า
+        <router-link
+          :to="{ name: 'SettingsData' }"
+          class="font-bold text-secondary"
+        >
+          <div class="mt-2 text-base">จัดการฐานข้อมูล</div>
+        </router-link>
+        <div class="mt-2 text-sm font-normal text-red-700">
+          ** ถ้ามีข้อมูลที่คุณเพิ่มเองอยู่แล้ว
+          การโหลดข้อมูลตัวอย่างจะทำให้ข้อมูลของคุณหายไป **
+        </div>
+      </div>
+    </div>
+
     <div class="space-y-6">
       <div class="rounded-lg border p-4">
         <h2 class="mb-3 text-2xl font-semibold text-secondary">
