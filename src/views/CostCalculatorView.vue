@@ -48,8 +48,8 @@ async function fetchData() {
 
     const settingsMap = new Map(settings.map((s) => [s.key, s.value]));
     laborCostPerHour.value = settingsMap.get('laborCostPerHour') || 50;
-    workHours.value = settingsMap.get('workHours') || 2;
-    overheadPercent.value = settingsMap.get('overheadPercent') || 15;
+    workHours.value = settingsMap.get('workHours') || 4;
+    overheadPercent.value = settingsMap.get('overheadPercent') || 30;
     defaultProfitMargin.value = settingsMap.get('defaultProfitMargin') || 50;
   } catch (e) {
     console.error('Fetch Data Error:', e);
@@ -453,7 +453,8 @@ const profitPerPiece = computed(() => {
         </h2>
         <p class="mb-6 text-gray-600">
           สำหรับขนมจำนวน {{ productionQuantity }} ชิ้น, ขนาด
-          {{ weightPerPiece }} กรัม/ชิ้น (น้ำหนักรวม
+          {{ weightPerPiece }} กรัม/ชิ้น <br />
+          (น้ำหนักรวม
           {{
             calculationResult.totalWeight.toLocaleString('en-US', {
               minimumFractionDigits: 2,
