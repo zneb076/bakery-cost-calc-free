@@ -41,6 +41,7 @@ import {
   faQuestionCircle,
   faMoon,
   faSun,
+  faPlayCircle,
 } from '@fortawesome/free-solid-svg-icons';
 import { faFacebook } from '@fortawesome/free-brands-svg-icons'; // 1. Import faFacebook
 
@@ -80,7 +81,8 @@ library.add(
   faEllipsisVertical,
   faQuestionCircle,
   faMoon,
-  faSun
+  faSun,
+  faPlayCircle
 );
 
 const app = createApp(App);

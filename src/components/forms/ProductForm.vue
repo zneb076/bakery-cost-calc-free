@@ -14,7 +14,11 @@ const emit = defineEmits(['save', 'cancel']);
 
 const product = ref({});
 const recipeOptions = computed(() => {
-  return props.availableRecipes.map((r) => ({ value: r.id, label: r.name }));
+  return props.availableRecipes.map((r) => ({
+    value: r.id,
+    label: r.name,
+    isSubRecipe: r.isSubRecipe,
+  }));
 });
 
 watch(
@@ -65,7 +69,19 @@ function handleSubmit() {
             :options="recipeOptions"
             placeholder="เลือกสูตรตั้งต้น"
             class="mt-1 dark:text-gray-600"
-          />
+          >
+            <template #option="{ option }">
+              <div class="flex items-center justify-between">
+                <span>{{ option.label }}</span>
+                <span
+                  v-if="option.isSubRecipe"
+                  class="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs text-white"
+                >
+                  สูตรย่อย
+                </span>
+              </div>
+            </template>
+          </Multiselect>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>

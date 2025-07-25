@@ -4,6 +4,7 @@ const props = defineProps({
     type: String,
     default: 'default', // default, large
   },
+  maxWidth: { type: String, default: 'max-w-md' },
 });
 const emit = defineEmits(['close']);
 </script>
@@ -16,6 +17,7 @@ const emit = defineEmits(['close']);
     <div
       class="w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-2xl dark:bg-gray-700"
       :class="{
+        maxWidth,
         'max-h-[90vh]': size === 'default',
         'h-[90vh]': size === 'large',
       }"

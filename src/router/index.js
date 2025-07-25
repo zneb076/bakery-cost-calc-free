@@ -16,16 +16,25 @@ const routes = [
     path: '/calculator',
     name: 'Calculator',
     component: () => import('../views/CostCalculatorView.vue'),
+    meta: {
+      videoUrl: 'https://www.youtube.com/embed/98hRp3peBSU',
+    },
   },
   {
     path: '/recipes',
     name: 'Recipes',
     component: () => import('../views/RecipeManagementView.vue'),
+    meta: {
+      videoUrl: 'https://www.youtube.com/embed/prMfv3PtmRY',
+    },
   },
   {
     path: '/ingredients',
     name: 'Ingredients',
     component: () => import('../views/IngredientManagementView.vue'),
+    meta: {
+      videoUrl: 'https://youtube.com/embed/tr59CPZVOQk',
+    },
   },
   {
     path: '/settings/data',
@@ -41,22 +50,31 @@ const routes = [
   {
     path: '/calculator-advance', // 2. กำหนด path
     name: 'CalculatorAdvance',
-    component: () => import('../views/AdvanceCalculatorView.vue'), // 3. ชี้มาที่ Component ใหม่
+    component: () => import('../views/AdvanceCalculatorView.vue'),
   },
   {
     path: '/calculator-breakeven', // path ใหม่
     name: 'CalculatorBreakEven',
     component: () => import('../views/BreakEvenCalculatorView.vue'),
+    meta: {
+      videoUrl: '',
+    },
   },
   {
     path: '/calculator-overhead', // path ใหม่
     name: 'CalculatorOverhead',
     component: () => import('../views/OverheadCalculatorView.vue'),
+    meta: {
+      videoUrl: '',
+    },
   },
   {
     path: '/products',
     name: 'Products',
     component: () => import('../views/ProductManagementView.vue'),
+    meta: {
+      videoUrl: '',
+    },
   },
   {
     path: '/guide',

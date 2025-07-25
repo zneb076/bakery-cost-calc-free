@@ -115,31 +115,30 @@ function getRecipeName(recipeId) {
 
 <template>
   <div class="rounded-lg bg-white p-4 shadow-md dark:bg-gray-700">
-    <div
-      class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center"
-    >
-      <h1 class="text-3xl font-bold">จัดการสินค้า (ขนม)</h1>
+    <div class="mb-6 flex justify-between gap-4 md:flex-row md:items-center">
+      <h1 class="text-2xl font-bold">จัดการสินค้า (ขนม)</h1>
       <button
         @click="openAddModal"
         class="dark:bg-primary-dark rounded-lg bg-primary px-4 py-2 text-white dark:text-gray-600"
       >
-        + เพิ่มราการขนมใหม่
+        + เพิ่มรายการใหม่
       </button>
-      <div class="relative w-full md:w-64">
-        <input
-          type="text"
-          v-model="searchQuery"
-          placeholder="ค้นหารายการขนม..."
-          class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 dark:text-gray-600"
-        />
-        <button
-          v-if="searchQuery"
-          @click="searchQuery = ''"
-          class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
-        >
-          <font-awesome-icon icon="xmark" />
-        </button>
-      </div>
+    </div>
+
+    <div class="relative mb-5 w-full md:w-64">
+      <input
+        type="text"
+        v-model="searchQuery"
+        placeholder="ค้นหารายการขนม..."
+        class="w-full rounded-md border border-gray-300 px-3 py-2 pr-10 dark:text-gray-600"
+      />
+      <button
+        v-if="searchQuery"
+        @click="searchQuery = ''"
+        class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700"
+      >
+        <font-awesome-icon icon="xmark" />
+      </button>
     </div>
 
     <div class="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-gray-500">

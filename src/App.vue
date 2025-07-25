@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import Navbar from './components/Navbar.vue';
 import ScrollToTopButton from './components/ScrollToTopButton.vue';
 import ReloadPrompt from './components/ReloadPrompt.vue';
@@ -8,12 +9,17 @@ import { useAppMode } from './composables/useAppMode.js';
 import { useAdvanceWelcome } from './composables/useAdvanceWelcome.js';
 import WelcomeAdvanceModal from './components/WelcomeAdvanceModal.vue';
 import { useThemeSwitcher } from './composables/useThemeSwitcher.js';
+import VideoModal from './components/VideoModal.vue';
 
 useThemeSwitcher();
 
 const { loadInitialFont, toggleFont } = useFontSwitcher();
 const { currentMode } = useAppMode();
 const { showWelcome, checkToShowWelcome, dismissWelcome } = useAdvanceWelcome();
+const showVideoModal = ref(false);
+const route = useRoute();
+
+const currentVideoUrl = computed(() => route.meta.videoUrl);
 
 onMounted(async () => {
   loadInitialFont();
@@ -31,6 +37,15 @@ onMounted(async () => {
 
     <main class="lg:ml-[310px]">
       <div class="container mx-auto p-2 pb-12 md:p-6">
+        <div v-if="currentVideoUrl" class="mb-4 text-right">
+          <button
+            @click="showVideoModal = true"
+            class="text-secondary hover:text-primary"
+          >
+            <font-awesome-icon icon="play-circle" />
+            <span class="ml-2 text-sm font-semibold">ดูวิดีโอสอนใช้งาน</span>
+          </button>
+        </div>
         <router-view />
       </div>
     </main>
@@ -40,5 +55,10 @@ onMounted(async () => {
   </div>
   <div>
     <WelcomeAdvanceModal v-if="showWelcome" @close="dismissWelcome" />
+    <VideoModal
+      v-if="showVideoModal && currentVideoUrl"
+      :video-url="currentVideoUrl"
+      @close="showVideoModal = false"
+    />
   </div>
 </template>

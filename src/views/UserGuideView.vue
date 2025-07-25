@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-lg bg-white p-2 shadow-md md:p-8 dark:bg-gray-600">
+  <div class="rounded-lg bg-white p-2 shadow-md md:p-8 dark:bg-gray-700">
     <h1 class="mb-4 text-3xl font-bold text-primary">คู่มือการใช้งาน</h1>
     <p class="mb-6 text-gray-600 dark:text-slate-200">
       เริ่มต้นใช้งาน "ขออีกคำ" ง่ายๆ ตามขั้นตอนต่อไปนี้
@@ -49,7 +49,7 @@
         <h2 class="mb-3 text-2xl font-semibold text-secondary">
           โหมด Advance (สำหรับวางแผนธุรกิจ)
         </h2>
-        <p class="mb-2 text-sm text-gray-600">
+        <p class="mb-2 text-sm text-gray-600 dark:text-slate-200">
           (เปิดใช้งานได้จากสวิตช์ที่เมนู Sidebar)
         </p>
         <ol class="list-inside list-decimal space-y-2">
