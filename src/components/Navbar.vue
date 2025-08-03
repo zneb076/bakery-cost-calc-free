@@ -200,3 +200,17 @@ const emit = defineEmits(['toggle-font']);
     </aside>
   </div>
 </template>
+
+<style>
+/* For Sidebar Menu */
+aside .router-link-exact-active {
+  background-color: rgba(255, 112, 129, 0.2); /* สี Primary แบบโปร่งแสง */
+  color: #ff7081; /* สี Primary */
+  font-weight: bold;
+}
+
+/* For Sub-menu items */
+aside .bg-gray-800 .router-link-exact-active {
+  background-color: rgba(255, 112, 129, 0.3);
+}
+</style>
